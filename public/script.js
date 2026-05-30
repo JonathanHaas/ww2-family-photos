@@ -99,6 +99,20 @@ function renderGalleryTabs(galleries, activeGalleryId, activeTag) {
 
 let archiveState = null;
 
+function cssUrl(value) {
+  return `url("${String(value).replace(/"/g, '\\"')}")`;
+}
+
+function applyPosterImage(poster) {
+  if (!poster?.url) {
+    return;
+  }
+
+  const posterUrl = cssUrl(poster.url);
+  document.documentElement.style.setProperty("--archive-bg", posterUrl);
+  document.documentElement.style.setProperty("--collage-photo-one", posterUrl);
+}
+
 function renderArchive(activeGalleryId = "all", activeTag = "all") {
   if (!archiveState?.photos?.length) {
     wireCards();
@@ -173,6 +187,7 @@ async function loadArchive() {
     }
 
     archiveState = await response.json();
+    applyPosterImage(archiveState.poster);
     renderArchive("all");
   } catch (error) {
     console.warn("Using placeholder gallery", error);

@@ -120,6 +120,11 @@ export default {
         return handleDeletePhoto(env, getPathId(url.pathname, "/api/photos/"));
       }
 
+      if (url.pathname === "/api/poster" && request.method === "PUT") {
+        await requireAdmin(request, env);
+        return await handleSetPoster(request, env);
+      }
+
       if (url.pathname.startsWith("/photo/") && request.method === "GET") {
         return handlePhoto(url, env);
       }
@@ -249,6 +254,9 @@ async function handleDeleteGallery(env, galleryId) {
   await Promise.all(deletedPhotos
     .filter((photo) => photo.key)
     .map((photo) => env.ARCHIVE_KV.delete(photo.key)));
+  if (deletedPhotos.some((photo) => photo.id === manifest.posterPhotoId)) {
+    manifest.posterPhotoId = "";
+  }
   manifest.galleries = manifest.galleries.filter((item) => item.id !== galleryId);
   manifest.photos = manifest.photos.filter((photo) => photo.galleryId !== galleryId);
   await saveManifest(env, manifest);
@@ -370,9 +378,34 @@ async function handleDeletePhoto(env, photoId) {
   }
 
   manifest.photos = manifest.photos.filter((item) => item.id !== photoId);
+  if (manifest.posterPhotoId === photoId) {
+    manifest.posterPhotoId = "";
+  }
   await saveManifest(env, manifest);
 
   return jsonResponse({ ok: true });
+}
+
+async function handleSetPoster(request, env) {
+  const body = await request.json().catch(() => null);
+  const photoId = cleanText(body?.photoId, 120);
+
+  if (!photoId) {
+    throw new HttpError(400, "Photo id is required.");
+  }
+
+  const manifest = await getManifest(env);
+  const photo = manifest.photos.find((item) => item.id === photoId);
+
+  if (!photo) {
+    throw new HttpError(404, "Photo not found.");
+  }
+
+  manifest.posterPhotoId = photoId;
+  manifest.updatedAt = new Date().toISOString();
+  await saveManifest(env, manifest);
+
+  return jsonResponse({ poster: publicPhoto(photo) });
 }
 
 async function handlePhoto(url, env) {
@@ -397,9 +430,11 @@ async function handlePhoto(url, env) {
 
 async function getPublicArchive(env) {
   const manifest = await getManifest(env);
+  const posterPhoto = manifest.photos.find((photo) => photo.id === manifest.posterPhotoId);
   return {
     galleries: manifest.galleries,
-    photos: manifest.photos.map(publicPhoto)
+    photos: manifest.photos.map(publicPhoto),
+    poster: posterPhoto ? publicPhoto(posterPhoto) : null
   };
 }
 
@@ -421,6 +456,7 @@ async function getManifest(env) {
   const manifest = {
     galleries: Array.isArray(storedManifest?.galleries) ? storedManifest.galleries : [],
     photos: Array.isArray(storedManifest?.photos) ? storedManifest.photos : [],
+    posterPhotoId: typeof storedManifest?.posterPhotoId === "string" ? storedManifest.posterPhotoId : "",
     seededSources: Boolean(storedManifest?.seededSources)
   };
 
@@ -762,7 +798,7 @@ function renderAdminApp() {
       const logoutButton = document.querySelector("#logoutButton");
       const toolbarLogoutButton = document.querySelector("#toolbarLogoutButton");
       const refreshButton = document.querySelector("#refreshButton");
-      let archive = { galleries: [], photos: [] };
+      let archive = { galleries: [], photos: [], poster: null };
 
       async function requestJson(url, options) {
         const response = await fetch(url, options);
@@ -847,14 +883,18 @@ function renderAdminApp() {
         archive.photos.forEach((photo) => {
           const item = document.createElement("article");
           item.className = "photo-manage-item";
+          const isPoster = archive.poster?.id === photo.id;
           const sourceLabel = photo.source ? "<small class=\\"source-label\\">Source: " + escapeHtml(photo.source) + "</small>" : "";
-          item.innerHTML = "<div><img class=\\"admin-thumb\\" src=\\"" + photo.url + "\\" alt=\\"\\" loading=\\"lazy\\" />" + sourceLabel + "</div>" +
+          const posterLabel = isPoster ? "<small class=\\"source-label poster-label\\">Current hero poster</small>" : "";
+          const posterButtonText = isPoster ? "Hero Poster" : "Set as Hero";
+          item.innerHTML = "<div><img class=\\"admin-thumb\\" src=\\"" + photo.url + "\\" alt=\\"\\" loading=\\"lazy\\" />" + posterLabel + sourceLabel + "</div>" +
             "<form class=\\"manage-form photo-manage-form\\" data-photo-id=\\"" + photo.id + "\\">" +
             "<label class=\\"admin-field\\"><span>Gallery</span><select name=\\"galleryId\\" required>" + galleryOptions(photo.galleryId) + "</select></label>" +
             "<label class=\\"admin-field\\"><span>Title</span><input name=\\"title\\" maxlength=\\"100\\" required /></label>" +
             "<label class=\\"admin-field\\"><span>Caption</span><textarea name=\\"caption\\" maxlength=\\"280\\"></textarea></label>" +
             "<label class=\\"admin-field\\"><span>Tags</span><input name=\\"tags\\" maxlength=\\"180\\" /></label>" +
             "<div class=\\"admin-actions\\"><button class=\\"admin-button\\" type=\\"submit\\">Save Image</button>" +
+            "<button class=\\"admin-button secondary poster\\" data-set-poster=\\"" + photo.id + "\\" type=\\"button\\">" + posterButtonText + "</button>" +
             "<button class=\\"admin-button secondary danger\\" data-delete-photo=\\"" + photo.id + "\\" type=\\"button\\">Delete Image</button></div>" +
             "</form>";
           item.querySelector(".admin-thumb").alt = photo.title || "Archive image";
@@ -966,6 +1006,31 @@ function renderAdminApp() {
       });
 
       photoManager.addEventListener("click", async (event) => {
+        const posterButton = event.target.closest("[data-set-poster]");
+
+        if (posterButton) {
+          const photo = archive.photos.find((item) => item.id === posterButton.dataset.setPoster);
+          const currentTitle = archive.poster?.title || "the current hero poster image";
+          const nextTitle = photo?.title || "this image";
+          const message = archive.poster?.id === posterButton.dataset.setPoster
+            ? nextTitle + " is already the hero poster image. Set it again?"
+            : "This will overwrite " + currentTitle + " as the current hero poster image. Continue?";
+
+          if (!confirm(message)) {
+            return;
+          }
+
+          setStatus("Setting hero poster...");
+          await requestJson("/api/poster", {
+            method: "PUT",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ photoId: posterButton.dataset.setPoster })
+          });
+          setStatus("Hero poster updated.");
+          await loadArchive();
+          return;
+        }
+
         const button = event.target.closest("[data-delete-photo]");
 
         if (!button) {

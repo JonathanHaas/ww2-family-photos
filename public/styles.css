@@ -900,6 +900,17 @@ h2 {
   background: transparent;
 }
 
+.admin-button.poster {
+  border-color: var(--brass);
+  color: #5b3d12;
+}
+
+.admin-button.poster:hover,
+.admin-button.poster:focus-visible {
+  color: #fff7ea;
+  background: var(--brass);
+}
+
 .admin-status {
   min-height: 24px;
   color: var(--oxblood);
@@ -953,6 +964,10 @@ h2 {
   margin-top: 8px;
   color: rgba(24, 24, 24, 0.64);
   font-weight: 900;
+}
+
+.poster-label {
+  color: var(--oxblood);
 }
 
 .admin-button.danger {
