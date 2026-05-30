@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WW2 Family Photos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header" aria-label="Site header">
+      <a class="brand" href="#top" aria-label="WW2 Family Photos home">
+        <span class="brand-mark">1940s</span>
+        <span>Family Archive</span>
+      </a>
+      <nav aria-label="Primary navigation">
+        <a href="#about">About</a>
+        <a href="#photos">Photos</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero parallax-panel" aria-label="WW2 family archive introduction">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+          <p class="kicker">A private family collection</p>
+          <h1>WW2 Family Photos</h1>
+          <p>
+            A quiet place to gather wartime memories, portraits, letters, and the
+            small stories that should stay close to home.
+          </p>
+          <a class="hero-link" href="#photos">View Photos</a>
+        </div>
+      </section>
+
+      <section class="about-section" id="about">
+        <div class="section-copy">
+          <p class="kicker">About</p>
+          <h2>Preserving the people behind the history.</h2>
+        </div>
+        <div class="about-grid">
+          <p>
+            This site is a simple family photo archive for sharing World War II
+            memories with relatives. The finished version can include scanned
+            photographs, handwritten captions, service details, locations, and
+            short notes from family members.
+          </p>
+          <p>
+            The current background image is only a public-domain placeholder.
+            Replace it later with a family photo that feels right for the tone
+            of the collection.
+          </p>
+        </div>
+      </section>
+
+      <section class="photo-section" id="photos">
+        <div class="section-copy">
+          <p class="kicker">Photos</p>
+          <h2>Gallery</h2>
+        </div>
+
+        <div class="gallery" aria-label="Family photo gallery">
+          <button class="photo-card" type="button" data-title="Service Portrait" data-caption="Add a portrait, name, branch, and date here.">
+            <span class="photo-frame placeholder-frame portrait"></span>
+            <span class="photo-meta">
+              <strong>Service Portrait</strong>
+              <small>Name, branch, year</small>
+            </span>
+          </button>
+          <button class="photo-card" type="button" data-title="Training Days" data-caption="Add a training camp photo or early service snapshot.">
+            <span class="photo-frame placeholder-frame landscape"></span>
+            <span class="photo-meta">
+              <strong>Training Days</strong>
+              <small>Camp, location, year</small>
+            </span>
+          </button>
+          <button class="photo-card" type="button" data-title="Letters Home" data-caption="Add scanned letters, envelopes, or handwritten notes.">
+            <span class="photo-frame placeholder-frame letter"></span>
+            <span class="photo-meta">
+              <strong>Letters Home</strong>
+              <small>Postmark, recipient</small>
+            </span>
+          </button>
+          <button class="photo-card" type="button" data-title="Family At Home" data-caption="Add home-front family photos and stories.">
+            <span class="photo-frame placeholder-frame home"></span>
+            <span class="photo-meta">
+              <strong>Family At Home</strong>
+              <small>City, state, year</small>
+            </span>
+          </button>
+          <button class="photo-card" type="button" data-title="On Leave" data-caption="Add snapshots from leave, visits, or reunions.">
+            <span class="photo-frame placeholder-frame leave"></span>
+            <span class="photo-meta">
+              <strong>On Leave</strong>
+              <small>People pictured</small>
+            </span>
+          </button>
+          <button class="photo-card" type="button" data-title="Keepsakes" data-caption="Add medals, patches, documents, or small family artifacts.">
+            <span class="photo-frame placeholder-frame keepsake"></span>
+            <span class="photo-meta">
+              <strong>Keepsakes</strong>
+              <small>Object, owner, notes</small>
+            </span>
+          </button>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>Built for family sharing. Replace placeholder cards with scanned photos when ready.</p>
+    </footer>
+
+    <dialog class="lightbox" id="photoLightbox" aria-labelledby="lightboxTitle">
+      <button class="close-button" type="button" aria-label="Close preview">×</button>
+      <div class="lightbox-image" aria-hidden="true"></div>
+      <h3 id="lightboxTitle"></h3>
+      <p id="lightboxCaption"></p>
+    </dialog>
+
+    <script src="script.js"></script>
+  </body>
+</html>
