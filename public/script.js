@@ -73,14 +73,30 @@ function tagsForPhotos(photos) {
   return [...new Set(photos.flatMap((photo) => photo.tags || []))].sort();
 }
 
+function photoDisplayKey(photo) {
+  const title = (photo.title || "").trim().toLowerCase();
+  const caption = (photo.caption || "").trim().toLowerCase();
+  const tags = [...(photo.tags || [])].sort().join("|");
+  const source = (photo.source || "").trim().toLowerCase();
+  const metadataKey = [photo.galleryId, title, caption, tags, source].join("::");
+
+  if (title || caption || tags || source) {
+    return metadataKey;
+  }
+
+  return photo.url || photo.id;
+}
+
 function uniquePhotos(photos) {
   const seen = new Set();
   return photos.filter((photo) => {
-    if (seen.has(photo.id)) {
+    const key = photoDisplayKey(photo);
+
+    if (seen.has(key)) {
       return false;
     }
 
-    seen.add(photo.id);
+    seen.add(key);
     return true;
   });
 }
