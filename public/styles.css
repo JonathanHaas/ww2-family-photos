@@ -695,28 +695,68 @@ h2 {
   text-underline-offset: 4px;
 }
 
-.footer-notes {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(18px, 4vw, 44px);
-  margin-top: clamp(32px, 6vw, 58px);
-  padding-top: 24px;
-  border-top: 1px solid rgba(255, 247, 234, 0.18);
-}
-
-.footer-notes section {
-  scroll-margin-top: 96px;
-}
-
-.footer-notes p {
-  margin-top: 10px;
-}
-
 .footer-legal {
   margin-top: 28px;
   padding-top: 22px;
   border-top: 1px solid rgba(255, 247, 234, 0.14);
   font-size: 0.9rem;
+}
+
+.notice-page {
+  background:
+    linear-gradient(180deg, rgba(31, 51, 73, 0.1), rgba(114, 43, 40, 0.06)),
+    var(--paper);
+}
+
+.notice-main {
+  min-height: 100vh;
+  padding: 148px clamp(20px, 7vw, 88px) clamp(54px, 8vw, 96px);
+}
+
+.notice-hero {
+  max-width: 860px;
+  margin-bottom: clamp(28px, 5vw, 54px);
+}
+
+.notice-hero h1 {
+  color: var(--navy);
+}
+
+.notice-hero p:not(.kicker) {
+  max-width: 660px;
+  margin: 22px 0 0;
+  font-size: 1.12rem;
+}
+
+.notice-card {
+  display: grid;
+  gap: 28px;
+  max-width: 920px;
+  padding: clamp(22px, 5vw, 46px);
+  border: 1px solid rgba(24, 24, 24, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 251, 242, 0.9);
+  box-shadow: 0 18px 46px rgba(24, 24, 24, 0.1);
+}
+
+.notice-updated {
+  margin: 0;
+  color: rgba(24, 24, 24, 0.62);
+  font-weight: 900;
+}
+
+.notice-section {
+  display: grid;
+  gap: 10px;
+}
+
+.notice-section h2 {
+  color: var(--navy);
+  font-size: clamp(2rem, 4vw, 3.2rem);
+}
+
+.notice-section p {
+  margin: 0;
 }
 
 .lightbox {
@@ -1067,7 +1107,6 @@ h2 {
   .about-grid,
   .gallery,
   .footer-grid,
-  .footer-notes,
   .admin-shell,
   .photo-manage-item {
     grid-template-columns: 1fr;
