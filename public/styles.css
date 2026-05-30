@@ -465,10 +465,8 @@ h2 {
 .gallery:has(.photo-card-uploaded) {
   position: relative;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
-  gap: clamp(8px, 1.6vw, 18px);
-  align-items: center;
-  padding: clamp(18px, 4vw, 46px) 0;
-  perspective: 1200px;
+  gap: clamp(16px, 2.4vw, 28px);
+  align-items: stretch;
 }
 
 .empty-gallery {
@@ -505,17 +503,14 @@ h2 {
 
 .photo-card-uploaded {
   gap: 0;
-  margin: clamp(8px, 2vw, 24px);
   padding: clamp(8px, 1.2vw, 13px);
-  overflow: visible;
+  overflow: hidden;
   border: 0;
   border-radius: 4px;
   background: #f8eedb;
   box-shadow:
     0 22px 44px rgba(24, 24, 24, 0.22),
     0 3px 8px rgba(24, 24, 24, 0.18);
-  transform: rotate(var(--scatter-rotate, 0deg)) translate(var(--scatter-x, 0), var(--scatter-y, 0));
-  transform-origin: center;
   transition:
     transform 180ms ease,
     box-shadow 180ms ease,
@@ -529,10 +524,7 @@ h2 {
     0 34px 72px rgba(24, 24, 24, 0.36),
     0 4px 10px rgba(24, 24, 24, 0.2);
   filter: saturate(1.05);
-  transform:
-    rotate(var(--scatter-hover-rotate, 0deg))
-    translate(var(--scatter-hover-x, 0), var(--scatter-hover-y, -8px))
-    scale(1.025);
+  transform: translateY(-4px);
 }
 
 .photo-card-uploaded .photo-frame {
@@ -555,64 +547,6 @@ h2 {
   border-color: rgba(74, 86, 55, 0.24);
   color: var(--olive);
   background: rgba(74, 86, 55, 0.08);
-}
-
-.scatter-1 {
-  --scatter-rotate: -6deg;
-  --scatter-hover-rotate: -3deg;
-  --scatter-x: -4%;
-  --scatter-y: 4%;
-  --scatter-hover-x: -3%;
-}
-
-.scatter-2 {
-  --scatter-rotate: 5deg;
-  --scatter-hover-rotate: 2deg;
-  --scatter-x: 3%;
-  --scatter-y: -2%;
-  --scatter-hover-x: 2%;
-}
-
-.scatter-3 {
-  --scatter-rotate: -2deg;
-  --scatter-hover-rotate: 1deg;
-  --scatter-x: 1%;
-  --scatter-y: 7%;
-}
-
-.scatter-4 {
-  --scatter-rotate: 8deg;
-  --scatter-hover-rotate: 4deg;
-  --scatter-x: -2%;
-  --scatter-y: 1%;
-}
-
-.scatter-5 {
-  --scatter-rotate: -9deg;
-  --scatter-hover-rotate: -5deg;
-  --scatter-x: 4%;
-  --scatter-y: -4%;
-}
-
-.scatter-6 {
-  --scatter-rotate: 3deg;
-  --scatter-hover-rotate: 0deg;
-  --scatter-x: -3%;
-  --scatter-y: 5%;
-}
-
-.scatter-7 {
-  --scatter-rotate: -4deg;
-  --scatter-hover-rotate: -1deg;
-  --scatter-x: 2%;
-  --scatter-y: -1%;
-}
-
-.scatter-8 {
-  --scatter-rotate: 7deg;
-  --scatter-hover-rotate: 3deg;
-  --scatter-x: -1%;
-  --scatter-y: 6%;
 }
 
 .photo-frame {
