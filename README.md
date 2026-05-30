@@ -7,6 +7,12 @@ A standalone static site for sharing family World War II photos.
 - `public/index.html`: About and Photos page structure
 - `public/styles.css`: responsive layout, gallery, and parallax/sepia treatment
 - `public/script.js`: simple gallery lightbox behavior
+- `src/index.js`: Cloudflare Worker for protected uploads and gallery APIs
+- `wrangler.jsonc`: Cloudflare Workers Static Assets and KV configuration
+
+## Uploads
+
+The deployed site stores gallery metadata and uploaded photos in Cloudflare Workers KV through the `ARCHIVE_KV` binding. The upload console is available at `/admin` and uses the `ADMIN_PASSWORD` Worker secret.
 
 ## Placeholder Image
 

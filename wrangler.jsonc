@@ -1,10 +1,26 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "ww2-family-photos",
+  "main": "./src/index.js",
   "compatibility_date": "2026-05-30",
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
   "assets": {
     "directory": "./public",
+    "binding": "ASSETS",
     "html_handling": "auto-trailing-slash",
-    "not_found_handling": "404-page"
+    "not_found_handling": "404-page",
+    "run_worker_first": ["/api/*", "/admin", "/photo/*"]
+  },
+  "kv_namespaces": [
+    {
+      "binding": "ARCHIVE_KV",
+      "id": "7fea6831f81d4b5daec296ddabb34209"
+    }
+  ],
+  "secrets": {
+    "required": ["ADMIN_PASSWORD"]
   }
 }

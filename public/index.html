@@ -21,6 +21,7 @@
       <nav aria-label="Primary navigation">
         <a href="#about">About</a>
         <a href="#photos">Photos</a>
+        <a href="/admin">Upload</a>
       </nav>
     </header>
 
@@ -64,7 +65,8 @@
           <h2>Gallery</h2>
         </div>
 
-        <div class="gallery" aria-label="Family photo gallery">
+        <div class="gallery-tabs" id="galleryTabs" aria-label="Gallery filters" hidden></div>
+        <div class="gallery" id="gallery" aria-label="Family photo gallery">
           <button class="photo-card" type="button" data-title="Service Portrait" data-caption="Add a portrait, name, branch, and date here.">
             <span class="photo-frame placeholder-frame portrait"></span>
             <span class="photo-meta">
