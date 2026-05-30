@@ -602,6 +602,16 @@ h2 {
   gap: 12px;
 }
 
+.admin-manager {
+  display: grid;
+  gap: 28px;
+}
+
+.admin-manager h3 {
+  margin: 0 0 12px;
+  font-size: 1.7rem;
+}
+
 .admin-list article {
   padding: 14px;
   border: 1px solid rgba(24, 24, 24, 0.12);
@@ -609,8 +619,35 @@ h2 {
   background: rgba(247, 241, 230, 0.82);
 }
 
-.admin-list h3 {
-  font-size: 1.5rem;
+.manage-form {
+  display: grid;
+  gap: 12px;
+}
+
+.photo-manage-item {
+  display: grid;
+  grid-template-columns: minmax(120px, 180px) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.admin-thumb {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 5px;
+  background: #151515;
+  object-fit: cover;
+}
+
+.admin-button.danger {
+  border-color: var(--oxblood);
+  color: var(--oxblood);
+}
+
+.admin-button.danger:hover,
+.admin-button.danger:focus-visible {
+  color: #fff7ea;
+  background: var(--oxblood);
 }
 
 .lightbox h3,
@@ -650,7 +687,8 @@ h2 {
   .about-section,
   .about-grid,
   .gallery,
-  .admin-shell {
+  .admin-shell,
+  .photo-manage-item {
     grid-template-columns: 1fr;
   }
 

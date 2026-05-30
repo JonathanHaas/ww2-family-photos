@@ -35,9 +35,29 @@ export default {
         return handleCreateGallery(request, env);
       }
 
+      if (url.pathname.startsWith("/api/galleries/") && request.method === "PUT") {
+        await requireAdmin(request, env);
+        return handleUpdateGallery(request, env, getPathId(url.pathname, "/api/galleries/"));
+      }
+
+      if (url.pathname.startsWith("/api/galleries/") && request.method === "DELETE") {
+        await requireAdmin(request, env);
+        return handleDeleteGallery(env, getPathId(url.pathname, "/api/galleries/"));
+      }
+
       if (url.pathname === "/api/photos" && request.method === "POST") {
         await requireAdmin(request, env);
         return handleUploadPhoto(request, env);
+      }
+
+      if (url.pathname.startsWith("/api/photos/") && request.method === "PUT") {
+        await requireAdmin(request, env);
+        return handleUpdatePhoto(request, env, getPathId(url.pathname, "/api/photos/"));
+      }
+
+      if (url.pathname.startsWith("/api/photos/") && request.method === "DELETE") {
+        await requireAdmin(request, env);
+        return handleDeletePhoto(env, getPathId(url.pathname, "/api/photos/"));
       }
 
       if (url.pathname.startsWith("/photo/") && request.method === "GET") {
@@ -125,6 +145,55 @@ async function handleCreateGallery(request, env) {
   return jsonResponse({ gallery }, { status: 201 });
 }
 
+async function handleUpdateGallery(request, env, galleryId) {
+  const body = await request.json().catch(() => null);
+  const title = cleanText(body?.title, 80);
+  const description = cleanText(body?.description, 220);
+
+  if (!galleryId) {
+    throw new HttpError(400, "Gallery id is required.");
+  }
+
+  if (!title) {
+    throw new HttpError(400, "Gallery title is required.");
+  }
+
+  const manifest = await getManifest(env);
+  const gallery = manifest.galleries.find((item) => item.id === galleryId);
+
+  if (!gallery) {
+    throw new HttpError(404, "Gallery not found.");
+  }
+
+  gallery.title = title;
+  gallery.description = description;
+  gallery.updatedAt = new Date().toISOString();
+  await saveManifest(env, manifest);
+
+  return jsonResponse({ gallery });
+}
+
+async function handleDeleteGallery(env, galleryId) {
+  if (!galleryId) {
+    throw new HttpError(400, "Gallery id is required.");
+  }
+
+  const manifest = await getManifest(env);
+  const gallery = manifest.galleries.find((item) => item.id === galleryId);
+
+  if (!gallery) {
+    throw new HttpError(404, "Gallery not found.");
+  }
+
+  const deletedPhotos = manifest.photos.filter((photo) => photo.galleryId === galleryId);
+  await Promise.all(deletedPhotos.map((photo) => env.ARCHIVE_KV.delete(photo.key)));
+  manifest.galleries = manifest.galleries.filter((item) => item.id !== galleryId);
+  manifest.photos = manifest.photos.filter((photo) => photo.galleryId !== galleryId);
+  await saveManifest(env, manifest);
+
+  return jsonResponse({ ok: true, deletedPhotos: deletedPhotos.length });
+}
+
 async function handleUploadPhoto(request, env) {
   const form = await request.formData();
   const galleryId = cleanText(form.get("galleryId"), 90);
@@ -185,6 +254,62 @@ async function handleUploadPhoto(request, env) {
   return jsonResponse({ photo: publicPhoto(photo) }, { status: 201 });
 }
 
+async function handleUpdatePhoto(request, env, photoId) {
+  const body = await request.json().catch(() => null);
+  const galleryId = cleanText(body?.galleryId, 90);
+  const title = cleanText(body?.title, 100) || "Untitled Photo";
+  const caption = cleanText(body?.caption, 280);
+  const tags = parseTags(body?.tags);
+
+  if (!photoId) {
+    throw new HttpError(400, "Photo id is required.");
+  }
+
+  if (!galleryId) {
+    throw new HttpError(400, "Choose a gallery.");
+  }
+
+  const manifest = await getManifest(env);
+  const photo = manifest.photos.find((item) => item.id === photoId);
+  const gallery = manifest.galleries.find((item) => item.id === galleryId);
+
+  if (!photo) {
+    throw new HttpError(404, "Photo not found.");
+  }
+
+  if (!gallery) {
+    throw new HttpError(400, "That gallery does not exist.");
+  }
+
+  photo.galleryId = galleryId;
+  photo.title = title;
+  photo.caption = caption;
+  photo.tags = tags;
+  photo.updatedAt = new Date().toISOString();
+  await saveManifest(env, manifest);
+
+  return jsonResponse({ photo: publicPhoto(photo) });
+}
+
+async function handleDeletePhoto(env, photoId) {
+  if (!photoId) {
+    throw new HttpError(400, "Photo id is required.");
+  }
+
+  const manifest = await getManifest(env);
+  const photo = manifest.photos.find((item) => item.id === photoId);
+
+  if (!photo) {
+    throw new HttpError(404, "Photo not found.");
+  }
+
+  await env.ARCHIVE_KV.delete(photo.key);
+  manifest.photos = manifest.photos.filter((item) => item.id !== photoId);
+  await saveManifest(env, manifest);
+
+  return jsonResponse({ ok: true });
+}
+
 async function handlePhoto(url, env) {
   const key = decodeURIComponent(url.pathname.replace(/^\/photo\//, ""));
 
@@ -226,7 +351,7 @@ function publicPhoto(photo) {
 }
 
 async function getManifest(env) {
-  const manifest = await env.ARCHIVE_KV.get(MANIFEST_KEY, { type: "json", cacheTtl: 60 });
+  const manifest = await env.ARCHIVE_KV.get(MANIFEST_KEY, { type: "json" });
   return {
     galleries: Array.isArray(manifest?.galleries) ? manifest.galleries : [],
     photos: Array.isArray(manifest?.photos) ? manifest.photos : []
@@ -314,6 +439,11 @@ function getCookie(request, name) {
   const prefix = `${name}=`;
   const cookie = cookies.find((item) => item.startsWith(prefix));
   return cookie ? cookie.slice(prefix.length) : "";
+}
+
+function getPathId(pathname, prefix) {
+  const id = decodeURIComponent(pathname.slice(prefix.length)).trim();
+  return id && !id.includes("/") ? id : "";
 }
 
 function cleanText(value, maxLength) {
@@ -502,16 +632,26 @@ function renderAdminApp() {
         </form>
       </section>
       <section class="admin-panel">
-        <p class="kicker">Galleries</p>
-        <h2>Archive Index</h2>
-        <div class="admin-list" id="archiveList"></div>
+        <p class="kicker">Manage</p>
+        <h2>Archive</h2>
+        <div class="admin-manager">
+          <section>
+            <h3>Galleries</h3>
+            <div class="admin-list" id="galleryManager"></div>
+          </section>
+          <section>
+            <h3>Images</h3>
+            <div class="admin-list" id="photoManager"></div>
+          </section>
+        </div>
       </section>
     </main>
     <script>
       const galleryForm = document.querySelector("#galleryForm");
       const photoForm = document.querySelector("#photoForm");
       const gallerySelect = document.querySelector("#gallerySelect");
-      const archiveList = document.querySelector("#archiveList");
+      const galleryManager = document.querySelector("#galleryManager");
+      const photoManager = document.querySelector("#photoManager");
       const status = document.querySelector("#status");
       const logoutButton = document.querySelector("#logoutButton");
       let archive = { galleries: [], photos: [] };
@@ -527,16 +667,39 @@ function renderAdminApp() {
         return data;
       }
 
+      function setStatus(message) {
+        status.textContent = message;
+      }
+
+      function galleryOptions(selectedId) {
+        return archive.galleries.map((gallery) => {
+          const selected = gallery.id === selectedId ? " selected" : "";
+          return "<option value=\\"" + gallery.id + "\\"" + selected + ">" + escapeHtml(gallery.title) + "</option>";
+        }).join("");
+      }
+
+      function escapeHtml(value) {
+        return String(value || "").replace(/[&<>"']/g, (character) => ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#39;"
+        })[character]);
+      }
+
       function renderArchive() {
         gallerySelect.replaceChildren();
-        archiveList.replaceChildren();
+        galleryManager.replaceChildren();
+        photoManager.replaceChildren();
 
         if (!archive.galleries.length) {
           const option = document.createElement("option");
           option.textContent = "Create a gallery first";
           option.value = "";
           gallerySelect.append(option);
-          archiveList.textContent = "No galleries yet.";
+          galleryManager.textContent = "No galleries yet.";
+          photoManager.textContent = "No images yet.";
           return;
         }
 
@@ -550,16 +713,46 @@ function renderAdminApp() {
           const count = galleryPhotos.length;
           const tags = [...new Set(galleryPhotos.flatMap((photo) => photo.tags || []))];
           const item = document.createElement("article");
-          item.innerHTML = "<h3></h3><p></p><small></small><div class=\\"tag-list\\"></div>";
-          item.querySelector("h3").textContent = gallery.title;
-          item.querySelector("p").textContent = gallery.description || "No description";
+          item.innerHTML = "<form class=\\"manage-form gallery-manage-form\\" data-gallery-id=\\"" + gallery.id + "\\">" +
+            "<label class=\\"admin-field\\"><span>Title</span><input name=\\"title\\" maxlength=\\"80\\" required /></label>" +
+            "<label class=\\"admin-field\\"><span>Description</span><textarea name=\\"description\\" maxlength=\\"220\\"></textarea></label>" +
+            "<small></small><div class=\\"tag-list\\"></div>" +
+            "<div class=\\"admin-actions\\"><button class=\\"admin-button\\" type=\\"submit\\">Save Gallery</button>" +
+            "<button class=\\"admin-button secondary danger\\" data-delete-gallery=\\"" + gallery.id + "\\" type=\\"button\\">Delete Gallery</button></div>" +
+            "</form>";
+          item.querySelector("[name=title]").value = gallery.title;
+          item.querySelector("[name=description]").value = gallery.description || "";
           item.querySelector("small").textContent = count + (count === 1 ? " photo" : " photos");
           item.querySelector(".tag-list").replaceChildren(...tags.map((tag) => {
             const span = document.createElement("span");
             span.textContent = tag;
             return span;
           }));
-          archiveList.append(item);
+          galleryManager.append(item);
+        });
+
+        if (!archive.photos.length) {
+          photoManager.textContent = "No images yet.";
+          return;
+        }
+
+        archive.photos.forEach((photo) => {
+          const item = document.createElement("article");
+          item.className = "photo-manage-item";
+          item.innerHTML = "<img class=\\"admin-thumb\\" src=\\"" + photo.url + "\\" alt=\\"\\" loading=\\"lazy\\" />" +
+            "<form class=\\"manage-form photo-manage-form\\" data-photo-id=\\"" + photo.id + "\\">" +
+            "<label class=\\"admin-field\\"><span>Gallery</span><select name=\\"galleryId\\" required>" + galleryOptions(photo.galleryId) + "</select></label>" +
+            "<label class=\\"admin-field\\"><span>Title</span><input name=\\"title\\" maxlength=\\"100\\" required /></label>" +
+            "<label class=\\"admin-field\\"><span>Caption</span><textarea name=\\"caption\\" maxlength=\\"280\\"></textarea></label>" +
+            "<label class=\\"admin-field\\"><span>Tags</span><input name=\\"tags\\" maxlength=\\"180\\" /></label>" +
+            "<div class=\\"admin-actions\\"><button class=\\"admin-button\\" type=\\"submit\\">Save Image</button>" +
+            "<button class=\\"admin-button secondary danger\\" data-delete-photo=\\"" + photo.id + "\\" type=\\"button\\">Delete Image</button></div>" +
+            "</form>";
+          item.querySelector(".admin-thumb").alt = photo.title || "Archive image";
+          item.querySelector("[name=title]").value = photo.title || "";
+          item.querySelector("[name=caption]").value = photo.caption || "";
+          item.querySelector("[name=tags]").value = (photo.tags || []).join(", ");
+          photoManager.append(item);
         });
       }
 
@@ -570,7 +763,7 @@ function renderAdminApp() {
 
       galleryForm.addEventListener("submit", async (event) => {
         event.preventDefault();
-        status.textContent = "Creating gallery...";
+        setStatus("Creating gallery...");
         const form = new FormData(galleryForm);
         await requestJson("/api/galleries", {
           method: "POST",
@@ -581,19 +774,104 @@ function renderAdminApp() {
           })
         });
         galleryForm.reset();
-        status.textContent = "Gallery created.";
+        setStatus("Gallery created.");
         await loadArchive();
       });
 
       photoForm.addEventListener("submit", async (event) => {
         event.preventDefault();
-        status.textContent = "Uploading photo...";
+        setStatus("Uploading photo...");
         await requestJson("/api/photos", {
           method: "POST",
           body: new FormData(photoForm)
         });
         photoForm.reset();
-        status.textContent = "Photo uploaded.";
+        setStatus("Photo uploaded.");
+        await loadArchive();
+      });
+
+      galleryManager.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const form = event.target.closest(".gallery-manage-form");
+
+        if (!form) {
+          return;
+        }
+
+        const data = new FormData(form);
+        setStatus("Saving gallery...");
+        await requestJson("/api/galleries/" + encodeURIComponent(form.dataset.galleryId), {
+          method: "PUT",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            title: data.get("title"),
+            description: data.get("description")
+          })
+        });
+        setStatus("Gallery saved.");
+        await loadArchive();
+      });
+
+      galleryManager.addEventListener("click", async (event) => {
+        const button = event.target.closest("[data-delete-gallery]");
+
+        if (!button) {
+          return;
+        }
+
+        const gallery = archive.galleries.find((item) => item.id === button.dataset.deleteGallery);
+        const count = archive.photos.filter((photo) => photo.galleryId === button.dataset.deleteGallery).length;
+
+        if (!confirm("Delete " + (gallery?.title || "this gallery") + " and " + count + " image" + (count === 1 ? "" : "s") + "?")) {
+          return;
+        }
+
+        setStatus("Deleting gallery...");
+        await requestJson("/api/galleries/" + encodeURIComponent(button.dataset.deleteGallery), { method: "DELETE" });
+        setStatus("Gallery deleted.");
+        await loadArchive();
+      });
+
+      photoManager.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const form = event.target.closest(".photo-manage-form");
+
+        if (!form) {
+          return;
+        }
+
+        const data = new FormData(form);
+        setStatus("Saving image...");
+        await requestJson("/api/photos/" + encodeURIComponent(form.dataset.photoId), {
+          method: "PUT",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            galleryId: data.get("galleryId"),
+            title: data.get("title"),
+            caption: data.get("caption"),
+            tags: data.get("tags")
+          })
+        });
+        setStatus("Image saved.");
+        await loadArchive();
+      });
+
+      photoManager.addEventListener("click", async (event) => {
+        const button = event.target.closest("[data-delete-photo]");
+
+        if (!button) {
+          return;
+        }
+
+        const photo = archive.photos.find((item) => item.id === button.dataset.deletePhoto);
+
+        if (!confirm("Delete " + (photo?.title || "this image") + "?")) {
+          return;
+        }
+
+        setStatus("Deleting image...");
+        await requestJson("/api/photos/" + encodeURIComponent(button.dataset.deletePhoto), { method: "DELETE" });
+        setStatus("Image deleted.");
         await loadArchive();
       });
 
