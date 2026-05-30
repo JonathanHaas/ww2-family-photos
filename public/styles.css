@@ -504,6 +504,9 @@ h2 {
 }
 
 .admin-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 44px;
   padding: 0 16px;
   border: 1px solid var(--navy);
@@ -513,6 +516,10 @@ h2 {
   cursor: pointer;
   font: inherit;
   font-weight: 900;
+  line-height: 1;
+  text-align: center;
+  text-decoration: none;
+  vertical-align: middle;
 }
 
 .admin-button.secondary {
