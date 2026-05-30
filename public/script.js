@@ -37,9 +37,14 @@ function wireCards() {
       }
 
       if (card.dataset.image) {
-        lightboxImage.style.backgroundImage = `url("${card.dataset.image}")`;
-        lightboxImage.style.backgroundPosition = "center";
+        lightboxImage.replaceChildren();
+        const image = document.createElement("img");
+        image.src = card.dataset.image;
+        image.alt = title;
+        lightboxImage.append(image);
+        lightboxImage.style.backgroundImage = "";
       } else {
+        lightboxImage.replaceChildren();
         lightboxImage.style.backgroundImage = "";
         lightboxImage.style.backgroundPosition = getComputedStyle(frame).backgroundPosition;
       }
@@ -127,7 +132,7 @@ function renderArchive(activeGalleryId = "all", activeTag = "all") {
     const detail = document.createElement("small");
     const galleryTitle = galleryLookup.get(photo.galleryId)?.title || "Family Archive";
 
-    card.className = "photo-card";
+    card.className = "photo-card photo-card-uploaded";
     card.type = "button";
     card.dataset.title = photo.title || "Family Photo";
     card.dataset.caption = photo.caption || galleryTitle;

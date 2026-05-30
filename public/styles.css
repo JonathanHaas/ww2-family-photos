@@ -270,6 +270,11 @@ h2 {
   gap: 20px;
 }
 
+.gallery:has(.photo-card-uploaded) {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 480px), 1fr));
+  gap: clamp(18px, 3vw, 34px);
+}
+
 .empty-gallery {
   grid-column: 1 / -1;
   margin: 0;
@@ -300,6 +305,35 @@ h2 {
   border-color: rgba(114, 43, 40, 0.45);
   box-shadow: var(--shadow);
   transform: translateY(-4px);
+}
+
+.photo-card-uploaded {
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #151515;
+}
+
+.photo-card-uploaded .photo-frame {
+  aspect-ratio: 16 / 10;
+  min-height: min(72vh, 720px);
+  border-radius: 0;
+}
+
+.photo-card-uploaded .photo-meta {
+  padding: 18px;
+  color: #fff7ea;
+  background: linear-gradient(180deg, rgba(21, 21, 21, 0.62), rgba(21, 21, 21, 0.92));
+}
+
+.photo-card-uploaded .photo-meta small {
+  color: rgba(255, 247, 234, 0.72);
+}
+
+.photo-card-uploaded .tag-list span {
+  border-color: rgba(255, 247, 234, 0.28);
+  color: #fff7ea;
+  background: rgba(255, 247, 234, 0.12);
 }
 
 .photo-frame {
@@ -413,13 +447,16 @@ h2 {
 }
 
 .lightbox {
-  width: min(720px, calc(100vw - 32px));
+  width: min(100vw - 24px, 1500px);
+  max-width: none;
+  max-height: calc(100vh - 24px);
   padding: 0;
   border: 0;
   border-radius: 8px;
-  background: var(--paper);
+  overflow: hidden;
+  background: #111;
   box-shadow: var(--shadow);
-  color: var(--ink);
+  color: #fff7ea;
 }
 
 .lightbox::backdrop {
@@ -444,11 +481,26 @@ h2 {
 }
 
 .lightbox-image {
-  aspect-ratio: 16 / 9;
+  display: grid;
+  min-height: min(78vh, 920px);
+  place-items: center;
   background:
     linear-gradient(180deg, rgba(24, 24, 24, 0.08), rgba(24, 24, 24, 0.24)),
     var(--archive-bg) center / cover;
   filter: sepia(0.82) saturate(0.72) contrast(1.04);
+}
+
+.lightbox-image:has(img) {
+  background: #111;
+  filter: none;
+}
+
+.lightbox-image img {
+  display: block;
+  width: 100%;
+  height: min(78vh, 920px);
+  object-fit: contain;
+  background: #111;
 }
 
 .admin-page {
@@ -578,6 +630,7 @@ h2 {
 
 .lightbox p {
   margin-bottom: 28px;
+  color: rgba(255, 247, 234, 0.82);
 }
 
 @media (max-width: 840px) {
@@ -599,6 +652,10 @@ h2 {
   .gallery,
   .admin-shell {
     grid-template-columns: 1fr;
+  }
+
+  .photo-card-uploaded .photo-frame {
+    min-height: 58vh;
   }
 }
 
