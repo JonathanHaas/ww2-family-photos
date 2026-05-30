@@ -17,6 +17,7 @@ const SOURCE_PHOTOS = [
     galleryId: SOURCE_GALLERY_ID,
     title: "Wartime Source Photo 42",
     caption: "Public-domain World War II photograph from the National Archives.",
+    altText: "Black and white World War II source photograph from the National Archives.",
     tags: ["source", "ww2", "national archives"],
     url: "https://www.archives.gov/files/research/military/ww2/photos/images/ww2-42.jpg",
     source: "National Archives",
@@ -27,6 +28,7 @@ const SOURCE_PHOTOS = [
     galleryId: SOURCE_GALLERY_ID,
     title: "Wartime Source Photo 50",
     caption: "Public-domain World War II photograph from the National Archives.",
+    altText: "Black and white World War II source photograph from the National Archives.",
     tags: ["source", "ww2", "national archives"],
     url: "https://www.archives.gov/files/research/military/ww2/photos/images/ww2-50.jpg",
     source: "National Archives",
@@ -37,6 +39,7 @@ const SOURCE_PHOTOS = [
     galleryId: SOURCE_GALLERY_ID,
     title: "Wartime Source Photo 64",
     caption: "Public-domain World War II photograph from the National Archives.",
+    altText: "Black and white World War II source photograph from the National Archives.",
     tags: ["source", "ww2", "national archives"],
     url: "https://www.archives.gov/files/research/military/ww2/photos/images/ww2-64.jpg",
     source: "National Archives",
@@ -47,6 +50,7 @@ const SOURCE_PHOTOS = [
     galleryId: SOURCE_GALLERY_ID,
     title: "Wartime Source Photo 90",
     caption: "Public-domain World War II photograph from the National Archives.",
+    altText: "Black and white World War II source photograph from the National Archives.",
     tags: ["source", "ww2", "national archives"],
     url: "https://www.archives.gov/files/research/military/ww2/photos/images/ww2-90.jpg",
     source: "National Archives",
@@ -57,6 +61,7 @@ const SOURCE_PHOTOS = [
     galleryId: SOURCE_GALLERY_ID,
     title: "Wartime Source Photo 111",
     caption: "Public-domain World War II photograph from the National Archives.",
+    altText: "Black and white World War II source photograph from the National Archives.",
     tags: ["source", "ww2", "national archives"],
     url: "https://www.archives.gov/files/research/military/ww2/photos/images/ww2-111.jpg",
     source: "National Archives",
@@ -269,6 +274,7 @@ async function handleUploadPhoto(request, env) {
   const galleryId = cleanText(form.get("galleryId"), 90);
   const title = cleanText(form.get("title"), 100) || "Untitled Photo";
   const caption = cleanText(form.get("caption"), 280);
+  const altText = cleanText(form.get("altText"), 220);
   const tags = parseTags(form.get("tags"));
   const file = form.get("photo");
 
@@ -312,6 +318,7 @@ async function handleUploadPhoto(request, env) {
     key,
     title,
     caption,
+    altText,
     tags,
     contentType: file.type,
     size: file.size,
@@ -329,6 +336,7 @@ async function handleUpdatePhoto(request, env, photoId) {
   const galleryId = cleanText(body?.galleryId, 90);
   const title = cleanText(body?.title, 100) || "Untitled Photo";
   const caption = cleanText(body?.caption, 280);
+  const altText = cleanText(body?.altText, 220);
   const tags = parseTags(body?.tags);
 
   if (!photoId) {
@@ -354,6 +362,7 @@ async function handleUpdatePhoto(request, env, photoId) {
   photo.galleryId = galleryId;
   photo.title = title;
   photo.caption = caption;
+  photo.altText = altText;
   photo.tags = tags;
   photo.updatedAt = new Date().toISOString();
   await saveManifest(env, manifest);
@@ -444,11 +453,29 @@ function publicPhoto(photo) {
     galleryId: photo.galleryId,
     title: photo.title,
     caption: photo.caption,
+    altText: altTextForPhoto(photo),
     tags: Array.isArray(photo.tags) ? photo.tags : [],
     source: photo.source || "",
     createdAt: photo.createdAt,
     url: photo.url || `/photo/${encodeURIComponent(photo.key)}`
   };
+}
+
+function altTextForPhoto(photo) {
+  const explicitAlt = cleanText(photo.altText, 220);
+
+  if (explicitAlt) {
+    return explicitAlt;
+  }
+
+  const title = cleanText(photo.title, 100);
+  const caption = cleanText(photo.caption, 160);
+
+  if (title && caption) {
+    return `${title}. ${caption}`;
+  }
+
+  return title || caption || "Family archive photo";
 }
 
 async function getManifest(env) {
@@ -756,6 +783,10 @@ function renderAdminApp() {
             <textarea name="caption" maxlength="280"></textarea>
           </label>
           <label class="admin-field">
+            <span>Alt text</span>
+            <textarea name="altText" maxlength="220" placeholder="Describe the image for screen readers."></textarea>
+          </label>
+          <label class="admin-field">
             <span>Tags</span>
             <input name="tags" maxlength="180" placeholder="fred, uniform, letters" />
           </label>
@@ -892,14 +923,16 @@ function renderAdminApp() {
             "<label class=\\"admin-field\\"><span>Gallery</span><select name=\\"galleryId\\" required>" + galleryOptions(photo.galleryId) + "</select></label>" +
             "<label class=\\"admin-field\\"><span>Title</span><input name=\\"title\\" maxlength=\\"100\\" required /></label>" +
             "<label class=\\"admin-field\\"><span>Caption</span><textarea name=\\"caption\\" maxlength=\\"280\\"></textarea></label>" +
+            "<label class=\\"admin-field\\"><span>Alt text</span><textarea name=\\"altText\\" maxlength=\\"220\\"></textarea></label>" +
             "<label class=\\"admin-field\\"><span>Tags</span><input name=\\"tags\\" maxlength=\\"180\\" /></label>" +
             "<div class=\\"admin-actions\\"><button class=\\"admin-button\\" type=\\"submit\\">Save Image</button>" +
             "<button class=\\"admin-button secondary poster\\" data-set-poster=\\"" + photo.id + "\\" type=\\"button\\">" + posterButtonText + "</button>" +
             "<button class=\\"admin-button secondary danger\\" data-delete-photo=\\"" + photo.id + "\\" type=\\"button\\">Delete Image</button></div>" +
             "</form>";
-          item.querySelector(".admin-thumb").alt = photo.title || "Archive image";
+          item.querySelector(".admin-thumb").alt = photo.altText || photo.title || "Archive image";
           item.querySelector("[name=title]").value = photo.title || "";
           item.querySelector("[name=caption]").value = photo.caption || "";
+          item.querySelector("[name=altText]").value = photo.altText || "";
           item.querySelector("[name=tags]").value = (photo.tags || []).join(", ");
           photoManager.append(item);
         });
@@ -998,6 +1031,7 @@ function renderAdminApp() {
             galleryId: data.get("galleryId"),
             title: data.get("title"),
             caption: data.get("caption"),
+            altText: data.get("altText"),
             tags: data.get("tags")
           })
         });

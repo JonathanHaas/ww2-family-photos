@@ -19,6 +19,7 @@ function wireCards() {
     card.addEventListener("click", () => {
       const frame = card.querySelector(".photo-frame");
       const title = card.dataset.title || "Family Photo";
+      const altText = card.dataset.alt || title;
       const caption = card.dataset.caption || "Add photo details here.";
       const tags = card.dataset.tags ? card.dataset.tags.split(",").filter(Boolean) : [];
 
@@ -40,7 +41,7 @@ function wireCards() {
         lightboxImage.replaceChildren();
         const image = document.createElement("img");
         image.src = card.dataset.image;
-        image.alt = title;
+        image.alt = altText;
         lightboxImage.append(image);
         lightboxImage.style.backgroundImage = "";
       } else {
@@ -183,9 +184,13 @@ function renderArchive(activeGalleryId = "all", activeTag = "all") {
     card.dataset.title = photo.title || "Family Photo";
     card.dataset.caption = photo.caption || galleryTitle;
     card.dataset.image = photo.url;
+    card.dataset.alt = photo.altText || photo.title || galleryTitle;
     card.dataset.tags = (photo.tags || []).join(",");
+    card.setAttribute("aria-label", `Open photo: ${card.dataset.alt}`);
 
     frame.className = "photo-frame uploaded-frame";
+    frame.setAttribute("role", "img");
+    frame.setAttribute("aria-label", card.dataset.alt);
     frame.style.backgroundImage = `url("${photo.url}")`;
 
     meta.className = "photo-meta";
