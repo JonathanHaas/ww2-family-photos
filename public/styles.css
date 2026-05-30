@@ -165,26 +165,6 @@ summary,
   filter: blur(18px);
 }
 
-.hero-collage::after {
-  position: absolute;
-  right: 10%;
-  bottom: 3%;
-  z-index: 7;
-  min-height: 42px;
-  padding: 0 16px;
-  border: 1px solid rgba(255, 247, 234, 0.52);
-  background: rgba(17, 17, 17, 0.76);
-  color: #fff7ea;
-  content: "Enter gallery";
-  display: inline-flex;
-  align-items: center;
-  font-size: 0.78rem;
-  font-weight: 900;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  backdrop-filter: blur(8px);
-}
-
 .collage-photo {
   position: absolute;
   display: block;
