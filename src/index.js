@@ -130,6 +130,7 @@ async function handleUploadPhoto(request, env) {
   const galleryId = cleanText(form.get("galleryId"), 90);
   const title = cleanText(form.get("title"), 100) || "Untitled Photo";
   const caption = cleanText(form.get("caption"), 280);
+  const tags = parseTags(form.get("tags"));
   const file = form.get("photo");
 
   if (!galleryId) {
@@ -172,6 +173,7 @@ async function handleUploadPhoto(request, env) {
     key,
     title,
     caption,
+    tags,
     contentType: file.type,
     size: file.size,
     createdAt: new Date().toISOString()
@@ -217,6 +219,7 @@ function publicPhoto(photo) {
     galleryId: photo.galleryId,
     title: photo.title,
     caption: photo.caption,
+    tags: Array.isArray(photo.tags) ? photo.tags : [],
     createdAt: photo.createdAt,
     url: `/photo/${encodeURIComponent(photo.key)}`
   };
@@ -319,6 +322,18 @@ function cleanText(value, maxLength) {
   }
 
   return value.replace(/\s+/g, " ").trim().slice(0, maxLength);
+}
+
+function parseTags(value) {
+  if (typeof value !== "string") {
+    return [];
+  }
+
+  return [...new Set(value
+    .split(",")
+    .map((item) => cleanText(item, 32).toLowerCase())
+    .filter(Boolean))]
+    .slice(0, 12);
 }
 
 function createSlug(title, existingIds) {
@@ -471,6 +486,10 @@ function renderAdminApp() {
             <textarea name="caption" maxlength="280"></textarea>
           </label>
           <label class="admin-field">
+            <span>Tags</span>
+            <input name="tags" maxlength="180" placeholder="fred, uniform, letters" />
+          </label>
+          <label class="admin-field">
             <span>Photo</span>
             <input name="photo" type="file" accept="image/jpeg,image/png,image/webp,image/gif" required />
           </label>
@@ -527,12 +546,19 @@ function renderAdminApp() {
           option.textContent = gallery.title;
           gallerySelect.append(option);
 
-          const count = archive.photos.filter((photo) => photo.galleryId === gallery.id).length;
+          const galleryPhotos = archive.photos.filter((photo) => photo.galleryId === gallery.id);
+          const count = galleryPhotos.length;
+          const tags = [...new Set(galleryPhotos.flatMap((photo) => photo.tags || []))];
           const item = document.createElement("article");
-          item.innerHTML = "<h3></h3><p></p><small></small>";
+          item.innerHTML = "<h3></h3><p></p><small></small><div class=\\"tag-list\\"></div>";
           item.querySelector("h3").textContent = gallery.title;
           item.querySelector("p").textContent = gallery.description || "No description";
           item.querySelector("small").textContent = count + (count === 1 ? " photo" : " photos");
+          item.querySelector(".tag-list").replaceChildren(...tags.map((tag) => {
+            const span = document.createElement("span");
+            span.textContent = tag;
+            return span;
+          }));
           archiveList.append(item);
         });
       }

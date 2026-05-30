@@ -235,10 +235,33 @@ h2 {
   background: var(--oxblood);
 }
 
+.tag-tabs {
+  margin-top: -14px;
+}
+
+.tag-tabs button {
+  min-height: 34px;
+  border-color: rgba(74, 86, 55, 0.28);
+  color: var(--olive);
+  background: rgba(255, 251, 242, 0.52);
+  font-size: 0.8rem;
+}
+
+.tag-tabs button.active {
+  border-color: var(--olive);
+  background: var(--olive);
+}
+
 .gallery {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 20px;
+}
+
+.empty-gallery {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-weight: 800;
 }
 
 .photo-card {
@@ -344,6 +367,26 @@ h2 {
 .photo-meta small {
   color: rgba(24, 24, 24, 0.68);
   font-weight: 700;
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.tag-list span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 8px;
+  border: 1px solid rgba(74, 86, 55, 0.24);
+  border-radius: 999px;
+  color: var(--olive);
+  background: rgba(74, 86, 55, 0.08);
+  font-size: 0.76rem;
+  font-weight: 900;
 }
 
 .site-footer {
@@ -503,6 +546,10 @@ h2 {
 .lightbox p {
   margin-right: 28px;
   margin-left: 28px;
+}
+
+.lightbox-tags {
+  margin-top: 14px;
 }
 
 .lightbox h3 {

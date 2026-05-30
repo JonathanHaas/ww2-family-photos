@@ -1,5 +1,6 @@
 const gallery = document.querySelector("#gallery");
 const tabs = document.querySelector("#galleryTabs");
+const tagTabs = document.querySelector("#tagTabs");
 const lightbox = document.querySelector("#photoLightbox");
 const closeButton = document.querySelector(".close-button");
 const lightboxTitle = document.querySelector("#lightboxTitle");
@@ -19,9 +20,21 @@ function wireCards() {
       const frame = card.querySelector(".photo-frame");
       const title = card.dataset.title || "Family Photo";
       const caption = card.dataset.caption || "Add photo details here.";
+      const tags = card.dataset.tags ? card.dataset.tags.split(",").filter(Boolean) : [];
 
       lightboxTitle.textContent = title;
-      lightboxCaption.textContent = caption;
+      lightboxCaption.replaceChildren(document.createTextNode(caption));
+
+      if (tags.length) {
+        const tagList = document.createElement("span");
+        tagList.className = "tag-list lightbox-tags";
+        tags.forEach((tag) => {
+          const span = document.createElement("span");
+          span.textContent = tag;
+          tagList.append(span);
+        });
+        lightboxCaption.append(document.createElement("br"), tagList);
+      }
 
       if (card.dataset.image) {
         lightboxImage.style.backgroundImage = `url("${card.dataset.image}")`;
@@ -38,35 +51,50 @@ function wireCards() {
   });
 }
 
-function renderGalleryTabs(galleries, activeId) {
-  if (!galleries.length) {
-    tabs.hidden = true;
-    return;
-  }
+function renderButtonList(container, items, activeId, onSelect) {
+  container.replaceChildren();
 
-  tabs.hidden = false;
-  tabs.replaceChildren();
-
-  const allButton = document.createElement("button");
-  allButton.type = "button";
-  allButton.textContent = "All";
-  allButton.className = activeId === "all" ? "active" : "";
-  allButton.addEventListener("click", () => renderArchive("all"));
-  tabs.append(allButton);
-
-  galleries.forEach((item) => {
+  items.forEach((item) => {
     const button = document.createElement("button");
     button.type = "button";
-    button.textContent = item.title;
+    button.textContent = item.label;
     button.className = activeId === item.id ? "active" : "";
-    button.addEventListener("click", () => renderArchive(item.id));
-    tabs.append(button);
+    button.addEventListener("click", () => onSelect(item.id));
+    container.append(button);
   });
+}
+
+function renderGalleryTabs(galleries, activeGalleryId, activeTag) {
+  if (!galleries.length) {
+    tabs.hidden = true;
+  } else {
+    tabs.hidden = false;
+    renderButtonList(
+      tabs,
+      [{ id: "all", label: "All" }, ...galleries.map((item) => ({ id: item.id, label: item.title }))],
+      activeGalleryId,
+      (id) => renderArchive(id, activeTag)
+    );
+  }
+
+  const allTags = [...new Set((archiveState?.photos || []).flatMap((photo) => photo.tags || []))].sort();
+
+  if (!allTags.length) {
+    tagTabs.hidden = true;
+  } else {
+    tagTabs.hidden = false;
+    renderButtonList(
+      tagTabs,
+      [{ id: "all", label: "All tags" }, ...allTags.map((tag) => ({ id: tag, label: tag }))],
+      activeTag,
+      (tag) => renderArchive(activeGalleryId, tag)
+    );
+  }
 }
 
 let archiveState = null;
 
-function renderArchive(activeId = "all") {
+function renderArchive(activeGalleryId = "all", activeTag = "all") {
   if (!archiveState?.photos?.length) {
     wireCards();
     return;
@@ -74,12 +102,22 @@ function renderArchive(activeId = "all") {
 
   const galleries = archiveState.galleries || [];
   const galleryLookup = new Map(galleries.map((item) => [item.id, item]));
-  const photos = activeId === "all"
-    ? archiveState.photos
-    : archiveState.photos.filter((photo) => photo.galleryId === activeId);
+  const photos = archiveState.photos.filter((photo) => {
+    const galleryMatches = activeGalleryId === "all" || photo.galleryId === activeGalleryId;
+    const tagMatches = activeTag === "all" || (photo.tags || []).includes(activeTag);
+    return galleryMatches && tagMatches;
+  });
 
-  renderGalleryTabs(galleries, activeId);
+  renderGalleryTabs(galleries, activeGalleryId, activeTag);
   gallery.replaceChildren();
+
+  if (!photos.length) {
+    const empty = document.createElement("p");
+    empty.className = "empty-gallery";
+    empty.textContent = "No photos match those filters yet.";
+    gallery.append(empty);
+    return;
+  }
 
   photos.forEach((photo) => {
     const card = document.createElement("button");
@@ -94,6 +132,7 @@ function renderArchive(activeId = "all") {
     card.dataset.title = photo.title || "Family Photo";
     card.dataset.caption = photo.caption || galleryTitle;
     card.dataset.image = photo.url;
+    card.dataset.tags = (photo.tags || []).join(",");
 
     frame.className = "photo-frame uploaded-frame";
     frame.style.backgroundImage = `url("${photo.url}")`;
@@ -101,8 +140,19 @@ function renderArchive(activeId = "all") {
     meta.className = "photo-meta";
     title.textContent = photo.title || "Family Photo";
     detail.textContent = galleryTitle;
-
     meta.append(title, detail);
+
+    if (photo.tags?.length) {
+      const tagList = document.createElement("span");
+      tagList.className = "tag-list";
+      photo.tags.forEach((tag) => {
+        const span = document.createElement("span");
+        span.textContent = tag;
+        tagList.append(span);
+      });
+      meta.append(tagList);
+    }
+
     card.append(frame, meta);
     gallery.append(card);
   });
