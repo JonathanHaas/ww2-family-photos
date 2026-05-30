@@ -586,11 +586,27 @@ function renderAdminApp() {
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body class="admin-page">
+    <header class="admin-toolbar" aria-label="Archive admin toolbar">
+      <div>
+        <p class="kicker">Admin</p>
+        <strong>Photo Archive</strong>
+      </div>
+      <nav aria-label="Admin actions">
+        <a class="admin-tool-button" href="/">View Site</a>
+        <a class="admin-tool-button" href="#createGallery">New Gallery</a>
+        <a class="admin-tool-button" href="#uploadImage">Upload Image</a>
+        <a class="admin-tool-button" href="#manageGalleries">Galleries</a>
+        <a class="admin-tool-button" href="#manageImages">Images</a>
+        <button class="admin-tool-button" id="refreshButton" type="button">Refresh</button>
+        <button class="admin-tool-button danger" id="toolbarLogoutButton" type="button">Sign Out</button>
+      </nav>
+    </header>
     <main class="admin-shell">
       <section class="admin-panel">
         <p class="kicker">Upload</p>
         <h1>Photo Archive</h1>
         <form class="admin-form" id="galleryForm">
+          <div class="admin-section-anchor" id="createGallery"></div>
           <label class="admin-field">
             <span>New gallery</span>
             <input name="title" maxlength="80" required />
@@ -603,6 +619,7 @@ function renderAdminApp() {
         </form>
         <hr />
         <form class="admin-form" id="photoForm">
+          <div class="admin-section-anchor" id="uploadImage"></div>
           <label class="admin-field">
             <span>Gallery</span>
             <select name="galleryId" id="gallerySelect" required></select>
@@ -636,10 +653,12 @@ function renderAdminApp() {
         <h2>Archive</h2>
         <div class="admin-manager">
           <section>
+            <div class="admin-section-anchor" id="manageGalleries"></div>
             <h3>Galleries</h3>
             <div class="admin-list" id="galleryManager"></div>
           </section>
           <section>
+            <div class="admin-section-anchor" id="manageImages"></div>
             <h3>Images</h3>
             <div class="admin-list" id="photoManager"></div>
           </section>
@@ -654,6 +673,8 @@ function renderAdminApp() {
       const photoManager = document.querySelector("#photoManager");
       const status = document.querySelector("#status");
       const logoutButton = document.querySelector("#logoutButton");
+      const toolbarLogoutButton = document.querySelector("#toolbarLogoutButton");
+      const refreshButton = document.querySelector("#refreshButton");
       let archive = { galleries: [], photos: [] };
 
       async function requestJson(url, options) {
@@ -878,6 +899,17 @@ function renderAdminApp() {
       logoutButton.addEventListener("click", async () => {
         await fetch("/api/logout", { method: "POST" });
         location.href = "/admin";
+      });
+
+      toolbarLogoutButton.addEventListener("click", async () => {
+        await fetch("/api/logout", { method: "POST" });
+        location.href = "/admin";
+      });
+
+      refreshButton.addEventListener("click", async () => {
+        setStatus("Refreshing archive...");
+        await loadArchive();
+        setStatus("Archive refreshed.");
       });
 
       loadArchive().catch((error) => {

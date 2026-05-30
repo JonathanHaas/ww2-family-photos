@@ -741,8 +741,81 @@ h2 {
 
 .admin-page {
   min-height: 100vh;
-  padding: clamp(28px, 6vw, 64px);
+  padding: 0 clamp(20px, 5vw, 64px) clamp(28px, 6vw, 64px);
   background: var(--paper);
+}
+
+.admin-toolbar {
+  position: sticky;
+  z-index: 20;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 0 calc(clamp(20px, 5vw, 64px) * -1) clamp(22px, 4vw, 42px);
+  padding: 14px clamp(20px, 5vw, 64px);
+  border-bottom: 1px solid rgba(24, 24, 24, 0.14);
+  background: rgba(247, 241, 230, 0.92);
+  box-shadow: 0 12px 28px rgba(24, 24, 24, 0.08);
+  backdrop-filter: blur(14px);
+}
+
+.admin-toolbar .kicker {
+  margin-bottom: 2px;
+}
+
+.admin-toolbar strong {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.admin-toolbar nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.admin-tool-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid rgba(31, 51, 73, 0.3);
+  border-radius: 999px;
+  color: var(--navy);
+  background: rgba(255, 250, 240, 0.72);
+  cursor: var(--grenade-cursor), pointer;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 900;
+  text-align: center;
+  text-decoration: none;
+}
+
+.admin-tool-button:hover,
+.admin-tool-button:focus-visible {
+  color: #fff7ea;
+  background: var(--navy);
+}
+
+.admin-tool-button.danger {
+  border-color: rgba(114, 43, 40, 0.38);
+  color: var(--oxblood);
+}
+
+.admin-tool-button.danger:hover,
+.admin-tool-button.danger:focus-visible {
+  color: #fff7ea;
+  background: var(--oxblood);
+}
+
+.admin-section-anchor {
+  position: relative;
+  top: -96px;
 }
 
 .admin-shell {
@@ -937,6 +1010,15 @@ h2 {
   .admin-shell,
   .photo-manage-item {
     grid-template-columns: 1fr;
+  }
+
+  .admin-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-toolbar nav {
+    justify-content: flex-start;
   }
 
   .photo-card-uploaded .photo-frame {
