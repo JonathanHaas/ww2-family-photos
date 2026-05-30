@@ -124,7 +124,7 @@ function renderArchive(activeGalleryId = "all", activeTag = "all") {
     return;
   }
 
-  photos.forEach((photo) => {
+  photos.forEach((photo, index) => {
     const card = document.createElement("button");
     const frame = document.createElement("span");
     const meta = document.createElement("span");
@@ -132,7 +132,7 @@ function renderArchive(activeGalleryId = "all", activeTag = "all") {
     const detail = document.createElement("small");
     const galleryTitle = galleryLookup.get(photo.galleryId)?.title || "Family Archive";
 
-    card.className = "photo-card photo-card-uploaded";
+    card.className = `photo-card photo-card-uploaded scatter-${(index % 8) + 1}`;
     card.type = "button";
     card.dataset.title = photo.title || "Family Photo";
     card.dataset.caption = photo.caption || galleryTitle;
