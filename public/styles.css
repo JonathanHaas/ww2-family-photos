@@ -1,5 +1,10 @@
 :root {
   --archive-bg: url("https://www.archives.gov/files/research/still-pictures/ww2-111-sc-407101.jpeg");
+  --collage-photo-one: url("https://www.archives.gov/files/research/military/ww2/photos/images/ww2-42.jpg");
+  --collage-photo-two: url("https://www.archives.gov/files/research/military/ww2/photos/images/ww2-50.jpg");
+  --collage-photo-three: url("https://www.archives.gov/files/research/military/ww2/photos/images/ww2-64.jpg");
+  --collage-photo-four: url("https://www.archives.gov/files/research/military/ww2/photos/images/ww2-90.jpg");
+  --collage-photo-five: url("https://www.archives.gov/files/research/military/ww2/photos/images/ww2-111.jpg");
   --grenade-cursor: url("assets/grenade-cursor.svg") 14 4;
   --ink: #181818;
   --paper: #f7f1e6;
@@ -99,6 +104,8 @@ summary,
 .hero {
   position: relative;
   display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(320px, 1fr);
+  gap: clamp(24px, 6vw, 92px);
   min-height: 92vh;
   align-items: end;
   overflow: hidden;
@@ -133,7 +140,147 @@ summary,
 }
 
 .hero-content {
+  position: relative;
+  z-index: 2;
   max-width: 760px;
+}
+
+.hero-collage {
+  position: relative;
+  z-index: 1;
+  display: block;
+  min-height: min(64vh, 620px);
+  align-self: center;
+  color: inherit;
+  text-decoration: none;
+  transform: rotate(-1deg);
+}
+
+.hero-collage::before {
+  position: absolute;
+  inset: 13% 6% 4% 10%;
+  content: "";
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.52), transparent 66%);
+  filter: blur(18px);
+}
+
+.hero-collage::after {
+  position: absolute;
+  right: 10%;
+  bottom: 3%;
+  z-index: 7;
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1px solid rgba(255, 247, 234, 0.52);
+  background: rgba(17, 17, 17, 0.76);
+  color: #fff7ea;
+  content: "Enter gallery";
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  backdrop-filter: blur(8px);
+}
+
+.collage-photo {
+  position: absolute;
+  display: block;
+  border: clamp(8px, 1.2vw, 14px) solid #f6ecd9;
+  border-bottom-width: clamp(22px, 3vw, 38px);
+  border-radius: 3px;
+  background-color: #d8c7a7;
+  background-position: center;
+  background-size: cover;
+  box-shadow: 0 22px 54px rgba(0, 0, 0, 0.45);
+  filter: sepia(0.45) saturate(0.75) contrast(1.08);
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    filter 180ms ease;
+}
+
+.hero-collage:hover .collage-photo,
+.hero-collage:focus-visible .collage-photo {
+  box-shadow: 0 30px 78px rgba(0, 0, 0, 0.58);
+  filter: sepia(0.24) saturate(0.86) contrast(1.1);
+}
+
+.collage-photo-one {
+  z-index: 4;
+  top: 6%;
+  left: 14%;
+  width: 42%;
+  aspect-ratio: 4 / 5;
+  background-image: var(--collage-photo-one);
+  transform: rotate(-10deg);
+}
+
+.hero-collage:hover .collage-photo-one,
+.hero-collage:focus-visible .collage-photo-one {
+  transform: translate(-8px, -10px) rotate(-13deg);
+}
+
+.collage-photo-two {
+  z-index: 3;
+  top: 14%;
+  right: 8%;
+  width: 44%;
+  aspect-ratio: 5 / 4;
+  background-image: var(--collage-photo-two);
+  transform: rotate(8deg);
+}
+
+.hero-collage:hover .collage-photo-two,
+.hero-collage:focus-visible .collage-photo-two {
+  transform: translate(10px, -8px) rotate(11deg);
+}
+
+.collage-photo-three {
+  z-index: 5;
+  top: 38%;
+  left: 4%;
+  width: 40%;
+  aspect-ratio: 5 / 4;
+  background-image: var(--collage-photo-three);
+  transform: rotate(7deg);
+}
+
+.hero-collage:hover .collage-photo-three,
+.hero-collage:focus-visible .collage-photo-three {
+  transform: translate(-8px, 8px) rotate(10deg);
+}
+
+.collage-photo-four {
+  z-index: 6;
+  right: 16%;
+  bottom: 11%;
+  width: 43%;
+  aspect-ratio: 4 / 5;
+  background-image: var(--collage-photo-four);
+  transform: rotate(-7deg);
+}
+
+.hero-collage:hover .collage-photo-four,
+.hero-collage:focus-visible .collage-photo-four {
+  transform: translate(8px, 10px) rotate(-10deg);
+}
+
+.collage-photo-five {
+  z-index: 2;
+  right: 0;
+  bottom: 31%;
+  width: 34%;
+  aspect-ratio: 4 / 3;
+  background-image: var(--collage-photo-five);
+  transform: rotate(15deg);
+}
+
+.hero-collage:hover .collage-photo-five,
+.hero-collage:focus-visible .collage-photo-five {
+  transform: translate(12px, 2px) rotate(18deg);
 }
 
 .kicker {
@@ -676,12 +823,23 @@ h2 {
   }
 
   .hero {
+    grid-template-columns: 1fr;
     min-height: 86vh;
+    gap: 28px;
     background-attachment: scroll;
   }
 
   .hero::before {
     background-attachment: scroll;
+  }
+
+  .hero-collage {
+    order: 2;
+    min-height: 52vh;
+  }
+
+  .hero-content {
+    order: 1;
   }
 
   .about-section,
@@ -706,6 +864,15 @@ h2 {
 
   .hero {
     padding-top: 176px;
+  }
+
+  .hero-collage {
+    min-height: 44vh;
+  }
+
+  .collage-photo {
+    border-width: 7px;
+    border-bottom-width: 20px;
   }
 
   h1 {
