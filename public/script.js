@@ -69,7 +69,23 @@ function renderButtonList(container, items, activeId, onSelect) {
   });
 }
 
-function renderGalleryTabs(galleries, activeGalleryId, activeTag) {
+function tagsForPhotos(photos) {
+  return [...new Set(photos.flatMap((photo) => photo.tags || []))].sort();
+}
+
+function uniquePhotos(photos) {
+  const seen = new Set();
+  return photos.filter((photo) => {
+    if (seen.has(photo.id)) {
+      return false;
+    }
+
+    seen.add(photo.id);
+    return true;
+  });
+}
+
+function renderGalleryTabs(galleries, activeGalleryId, activeTag, availableTags) {
   if (!galleries.length) {
     tabs.hidden = true;
   } else {
@@ -82,15 +98,13 @@ function renderGalleryTabs(galleries, activeGalleryId, activeTag) {
     );
   }
 
-  const allTags = [...new Set((archiveState?.photos || []).flatMap((photo) => photo.tags || []))].sort();
-
-  if (!allTags.length) {
+  if (!availableTags.length) {
     tagTabs.hidden = true;
   } else {
     tagTabs.hidden = false;
     renderButtonList(
       tagTabs,
-      [{ id: "all", label: "All tags" }, ...allTags.map((tag) => ({ id: tag, label: tag }))],
+      [{ id: "all", label: "All tags" }, ...availableTags.map((tag) => ({ id: tag, label: tag }))],
       activeTag,
       (tag) => renderArchive(activeGalleryId, tag)
     );
@@ -121,13 +135,15 @@ function renderArchive(activeGalleryId = "all", activeTag = "all") {
 
   const galleries = archiveState.galleries || [];
   const galleryLookup = new Map(galleries.map((item) => [item.id, item]));
-  const photos = archiveState.photos.filter((photo) => {
-    const galleryMatches = activeGalleryId === "all" || photo.galleryId === activeGalleryId;
-    const tagMatches = activeTag === "all" || (photo.tags || []).includes(activeTag);
-    return galleryMatches && tagMatches;
-  });
+  const galleryPhotos = archiveState.photos.filter((photo) => activeGalleryId === "all" || photo.galleryId === activeGalleryId);
+  const availableTags = tagsForPhotos(galleryPhotos);
+  const selectedTag = activeTag === "all" || availableTags.includes(activeTag) ? activeTag : "all";
+  const photos = uniquePhotos(galleryPhotos.filter((photo) => {
+    const tagMatches = selectedTag === "all" || (photo.tags || []).includes(selectedTag);
+    return tagMatches;
+  }));
 
-  renderGalleryTabs(galleries, activeGalleryId, activeTag);
+  renderGalleryTabs(galleries, activeGalleryId, selectedTag, availableTags);
   gallery.replaceChildren();
 
   if (!photos.length) {
