@@ -334,6 +334,49 @@ h2 {
   backdrop-filter: blur(8px);
 }
 
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.hero-actions .hero-link {
+  margin-top: 34px;
+}
+
+.hero-link-secondary {
+  border-color: rgba(255, 247, 234, 0.52);
+  background: rgba(255, 247, 234, 0.06);
+}
+
+.not-found-hero {
+  min-height: 100vh;
+}
+
+.not-found-content {
+  max-width: 840px;
+}
+
+.not-found-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 24px;
+  color: rgba(255, 247, 234, 0.78);
+  font-weight: 800;
+}
+
+.not-found-details span {
+  padding-right: 12px;
+  border-right: 1px solid rgba(255, 247, 234, 0.36);
+}
+
+.not-found-details span:last-child {
+  padding-right: 0;
+  border-right: 0;
+}
+
 .about-section,
 .photo-section {
   padding: clamp(64px, 9vw, 116px) clamp(20px, 7vw, 88px);
