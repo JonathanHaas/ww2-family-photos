@@ -682,7 +682,10 @@ h2 {
 }
 
 .footer-links a {
+  display: inline-flex;
   width: fit-content;
+  align-items: center;
+  gap: 6px;
   color: rgba(255, 247, 234, 0.86);
   font-weight: 800;
   text-decoration: none;
@@ -693,6 +696,17 @@ h2 {
   color: #fff7ea;
   text-decoration: underline;
   text-underline-offset: 4px;
+}
+
+.link-icon {
+  width: 0.95em;
+  height: 0.95em;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.3;
 }
 
 .footer-legal {
