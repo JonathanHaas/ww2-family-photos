@@ -948,6 +948,13 @@ h2 {
   object-fit: cover;
 }
 
+.source-label {
+  display: block;
+  margin-top: 8px;
+  color: rgba(24, 24, 24, 0.64);
+  font-weight: 900;
+}
+
 .admin-button.danger {
   border-color: var(--oxblood);
   color: var(--oxblood);

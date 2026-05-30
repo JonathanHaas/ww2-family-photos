@@ -3,6 +3,66 @@ const SESSION_COOKIE = "archive_session";
 const SESSION_TTL_SECONDS = 60 * 60 * 8;
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+const SOURCE_GALLERY_ID = "national-archives";
+const SOURCE_GALLERY = {
+  id: SOURCE_GALLERY_ID,
+  title: "National Archives",
+  description: "Public-domain World War II source photos from the National Archives.",
+  createdAt: "2026-05-30T00:00:00.000Z",
+  source: "National Archives"
+};
+const SOURCE_PHOTOS = [
+  {
+    id: "source-national-archives-ww2-42",
+    galleryId: SOURCE_GALLERY_ID,
+    title: "Wartime Source Photo 42",
+    caption: "Public-domain World War II photograph from the National Archives.",
+    tags: ["source", "ww2", "national archives"],
+    url: "https://www.archives.gov/files/research/military/ww2/photos/images/ww2-42.jpg",
+    source: "National Archives",
+    createdAt: "2026-05-30T00:00:00.000Z"
+  },
+  {
+    id: "source-national-archives-ww2-50",
+    galleryId: SOURCE_GALLERY_ID,
+    title: "Wartime Source Photo 50",
+    caption: "Public-domain World War II photograph from the National Archives.",
+    tags: ["source", "ww2", "national archives"],
+    url: "https://www.archives.gov/files/research/military/ww2/photos/images/ww2-50.jpg",
+    source: "National Archives",
+    createdAt: "2026-05-30T00:00:00.000Z"
+  },
+  {
+    id: "source-national-archives-ww2-64",
+    galleryId: SOURCE_GALLERY_ID,
+    title: "Wartime Source Photo 64",
+    caption: "Public-domain World War II photograph from the National Archives.",
+    tags: ["source", "ww2", "national archives"],
+    url: "https://www.archives.gov/files/research/military/ww2/photos/images/ww2-64.jpg",
+    source: "National Archives",
+    createdAt: "2026-05-30T00:00:00.000Z"
+  },
+  {
+    id: "source-national-archives-ww2-90",
+    galleryId: SOURCE_GALLERY_ID,
+    title: "Wartime Source Photo 90",
+    caption: "Public-domain World War II photograph from the National Archives.",
+    tags: ["source", "ww2", "national archives"],
+    url: "https://www.archives.gov/files/research/military/ww2/photos/images/ww2-90.jpg",
+    source: "National Archives",
+    createdAt: "2026-05-30T00:00:00.000Z"
+  },
+  {
+    id: "source-national-archives-ww2-111",
+    galleryId: SOURCE_GALLERY_ID,
+    title: "Wartime Source Photo 111",
+    caption: "Public-domain World War II photograph from the National Archives.",
+    tags: ["source", "ww2", "national archives"],
+    url: "https://www.archives.gov/files/research/military/ww2/photos/images/ww2-111.jpg",
+    source: "National Archives",
+    createdAt: "2026-05-30T00:00:00.000Z"
+  }
+];
 
 export default {
   async fetch(request, env, ctx) {
@@ -186,7 +246,9 @@ async function handleDeleteGallery(env, galleryId) {
   }
 
   const deletedPhotos = manifest.photos.filter((photo) => photo.galleryId === galleryId);
-  await Promise.all(deletedPhotos.map((photo) => env.ARCHIVE_KV.delete(photo.key)));
+  await Promise.all(deletedPhotos
+    .filter((photo) => photo.key)
+    .map((photo) => env.ARCHIVE_KV.delete(photo.key)));
   manifest.galleries = manifest.galleries.filter((item) => item.id !== galleryId);
   manifest.photos = manifest.photos.filter((photo) => photo.galleryId !== galleryId);
   await saveManifest(env, manifest);
@@ -303,7 +365,10 @@ async function handleDeletePhoto(env, photoId) {
     throw new HttpError(404, "Photo not found.");
   }
 
-  await env.ARCHIVE_KV.delete(photo.key);
+  if (photo.key) {
+    await env.ARCHIVE_KV.delete(photo.key);
+  }
+
   manifest.photos = manifest.photos.filter((item) => item.id !== photoId);
   await saveManifest(env, manifest);
 
@@ -345,21 +410,43 @@ function publicPhoto(photo) {
     title: photo.title,
     caption: photo.caption,
     tags: Array.isArray(photo.tags) ? photo.tags : [],
+    source: photo.source || "",
     createdAt: photo.createdAt,
-    url: `/photo/${encodeURIComponent(photo.key)}`
+    url: photo.url || `/photo/${encodeURIComponent(photo.key)}`
   };
 }
 
 async function getManifest(env) {
-  const manifest = await env.ARCHIVE_KV.get(MANIFEST_KEY, { type: "json" });
-  return {
-    galleries: Array.isArray(manifest?.galleries) ? manifest.galleries : [],
-    photos: Array.isArray(manifest?.photos) ? manifest.photos : []
+  const storedManifest = await env.ARCHIVE_KV.get(MANIFEST_KEY, { type: "json" });
+  const manifest = {
+    galleries: Array.isArray(storedManifest?.galleries) ? storedManifest.galleries : [],
+    photos: Array.isArray(storedManifest?.photos) ? storedManifest.photos : [],
+    seededSources: Boolean(storedManifest?.seededSources)
   };
+
+  if (!manifest.seededSources) {
+    seedSourcePhotos(manifest);
+    await saveManifest(env, manifest);
+  }
+
+  return manifest;
 }
 
 async function saveManifest(env, manifest) {
   await env.ARCHIVE_KV.put(MANIFEST_KEY, JSON.stringify(manifest, null, 2));
+}
+
+function seedSourcePhotos(manifest) {
+  if (!manifest.galleries.some((gallery) => gallery.id === SOURCE_GALLERY_ID)) {
+    manifest.galleries.push({ ...SOURCE_GALLERY });
+  }
+
+  const existingPhotoIds = new Set(manifest.photos.map((photo) => photo.id));
+  const missingPhotos = SOURCE_PHOTOS
+    .filter((photo) => !existingPhotoIds.has(photo.id))
+    .map((photo) => ({ ...photo, tags: [...photo.tags] }));
+  manifest.photos.push(...missingPhotos);
+  manifest.seededSources = true;
 }
 
 async function requireAdmin(request, env) {
@@ -760,7 +847,8 @@ function renderAdminApp() {
         archive.photos.forEach((photo) => {
           const item = document.createElement("article");
           item.className = "photo-manage-item";
-          item.innerHTML = "<img class=\\"admin-thumb\\" src=\\"" + photo.url + "\\" alt=\\"\\" loading=\\"lazy\\" />" +
+          const sourceLabel = photo.source ? "<small class=\\"source-label\\">Source: " + escapeHtml(photo.source) + "</small>" : "";
+          item.innerHTML = "<div><img class=\\"admin-thumb\\" src=\\"" + photo.url + "\\" alt=\\"\\" loading=\\"lazy\\" />" + sourceLabel + "</div>" +
             "<form class=\\"manage-form photo-manage-form\\" data-photo-id=\\"" + photo.id + "\\">" +
             "<label class=\\"admin-field\\"><span>Gallery</span><select name=\\"galleryId\\" required>" + galleryOptions(photo.galleryId) + "</select></label>" +
             "<label class=\\"admin-field\\"><span>Title</span><input name=\\"title\\" maxlength=\\"100\\" required /></label>" +
