@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Family Archive">
+  <rect width="64" height="64" rx="8" fill="#1f3349"/>
+  <rect x="13" y="10" width="38" height="44" rx="2" fill="#f7f1e6"/>
+  <rect x="16" y="13" width="32" height="28" fill="#a87d35"/>
+  <path d="M16 41h32v10H16z" fill="#f7f1e6"/>
+  <path d="M21 22h22M21 30h22M22 47h20" stroke="#1f3349" stroke-width="3" stroke-linecap="round"/>
+</svg>
