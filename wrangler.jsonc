@@ -1,6 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "ww2-family-photos",
+  "account_id": "9041bba91fe19976e4ddba13e6b036c0",
   "main": "./src/index.js",
   "compatibility_date": "2026-05-30",
   "observability": {
