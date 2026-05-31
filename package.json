@@ -1,0 +1,7 @@
+{
+  "scripts": {
+    "build": "node scripts/build-static.js",
+    "check": "npm run build && node --check src/index.js && node --check public/script.js",
+    "deploy": "npm run build && npx --yes wrangler@latest deploy"
+  }
+}

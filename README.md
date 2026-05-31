@@ -5,10 +5,19 @@ A standalone static site for sharing family World War II photos.
 ## Files
 
 - `public/index.html`: About and Photos page structure
+- `templates/partials/footer.html`: shared footer source
+- `scripts/build-static.js`: injects shared partials into static HTML
 - `public/styles.css`: responsive layout, gallery, and parallax/sepia treatment
 - `public/script.js`: simple gallery lightbox behavior
 - `src/index.js`: Cloudflare Worker for protected uploads and gallery APIs
 - `wrangler.jsonc`: Cloudflare Workers Static Assets and KV configuration
+
+## Build
+
+Run `npm run build` after editing shared partials. The build keeps the deployed
+HTML static by replacing the generated footer block in each public page.
+
+Use `npm run deploy` to build and deploy together.
 
 ## Uploads
 
