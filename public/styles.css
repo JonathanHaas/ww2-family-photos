@@ -438,15 +438,16 @@ h2 {
 
 .gallery {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 340px));
   gap: 20px;
+  justify-content: center;
+  align-items: start;
 }
 
 .gallery:has(.photo-card-uploaded) {
   position: relative;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 360px));
   gap: clamp(16px, 2.4vw, 28px);
-  align-items: stretch;
 }
 
 .empty-gallery {
@@ -458,6 +459,7 @@ h2 {
 .photo-card {
   display: grid;
   gap: 14px;
+  width: 100%;
   min-width: 0;
   padding: 12px;
   border: 1px solid rgba(24, 24, 24, 0.14);
@@ -508,9 +510,10 @@ h2 {
 }
 
 .photo-card-uploaded .photo-frame {
-  aspect-ratio: 4 / 3;
-  min-height: clamp(260px, 42vw, 620px);
+  aspect-ratio: 1;
+  min-height: 0;
   border-radius: 2px;
+  background-position: center center;
 }
 
 .photo-card-uploaded .photo-meta {
@@ -532,7 +535,7 @@ h2 {
 .photo-frame {
   position: relative;
   display: block;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 1;
   overflow: hidden;
   border-radius: 4px;
   background:
@@ -559,7 +562,7 @@ h2 {
 }
 
 .uploaded-frame {
-  background-position: center;
+  background-position: center center;
   background-size: cover;
   filter: sepia(0.38) saturate(0.9) contrast(1.02);
 }
@@ -1136,7 +1139,7 @@ h2 {
   }
 
   .photo-card-uploaded .photo-frame {
-    min-height: 58vh;
+    min-height: 0;
   }
 }
 

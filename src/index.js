@@ -11,6 +11,14 @@ const SOURCE_GALLERY = {
   createdAt: "2026-05-30T00:00:00.000Z",
   source: "National Archives"
 };
+const FAMILY_SCANS_GALLERY_ID = "family-scans";
+const FAMILY_SCANS_GALLERY = {
+  id: FAMILY_SCANS_GALLERY_ID,
+  title: "Family Scans",
+  description: "Individual photos cropped from family source scans. Details can be updated as names, dates, and locations are confirmed.",
+  createdAt: "2026-06-05T00:00:00.000Z",
+  source: "Family scan"
+};
 const SOURCE_PHOTOS = [
   {
     id: "source-national-archives-ww2-42",
@@ -66,6 +74,85 @@ const SOURCE_PHOTOS = [
     url: "https://www.archives.gov/files/research/military/ww2/photos/images/ww2-111.jpg",
     source: "National Archives",
     createdAt: "2026-05-30T00:00:00.000Z"
+  }
+];
+const FAMILY_SCAN_PHOTOS = [
+  {
+    id: "family-scan-service-portrait",
+    galleryId: FAMILY_SCANS_GALLERY_ID,
+    title: "Service Portrait",
+    caption: "Default metadata from the family scan. Add the service member's name, branch, date, and location when confirmed.",
+    altText: "Black and white service portrait of a uniformed World War II serviceman.",
+    tags: ["family scan", "ww2", "portrait", "service"],
+    url: "/assets/family-scans/service-portrait.jpg",
+    source: "Family scan",
+    createdAt: "2026-06-05T00:00:00.000Z"
+  },
+  {
+    id: "family-scan-flags-on-deck",
+    galleryId: FAMILY_SCANS_GALLERY_ID,
+    title: "Flags On Deck",
+    caption: "Default metadata from the family scan. Several sailors or servicemen stand on deck holding Japanese flags.",
+    altText: "Black and white photo of servicemen standing on a ship deck with Japanese flags.",
+    tags: ["family scan", "ww2", "ship", "flags"],
+    url: "/assets/family-scans/flags-on-deck.jpg",
+    source: "Family scan",
+    createdAt: "2026-06-05T00:00:00.000Z"
+  },
+  {
+    id: "family-scan-army-boat-ps-134",
+    galleryId: FAMILY_SCANS_GALLERY_ID,
+    title: "U.S. Army PS-134 Boat",
+    caption: "Default metadata from the family scan. A U.S. Army boat marked PS-134 sits on the water.",
+    altText: "Black and white photo of a U.S. Army PS-134 boat on the water.",
+    tags: ["family scan", "ww2", "boat", "army"],
+    url: "/assets/family-scans/army-boat-ps-134.jpg",
+    source: "Family scan",
+    createdAt: "2026-06-05T00:00:00.000Z"
+  },
+  {
+    id: "family-scan-deck-gun",
+    galleryId: FAMILY_SCANS_GALLERY_ID,
+    title: "Deck Gun",
+    caption: "Default metadata from the family scan. A serviceman sits beside a large mounted gun aboard a vessel.",
+    altText: "Black and white photo of a serviceman seated beside a mounted deck gun.",
+    tags: ["family scan", "ww2", "ship", "equipment"],
+    url: "/assets/family-scans/deck-gun.jpg",
+    source: "Family scan",
+    createdAt: "2026-06-05T00:00:00.000Z"
+  },
+  {
+    id: "family-scan-flags-group",
+    galleryId: FAMILY_SCANS_GALLERY_ID,
+    title: "Group With Flags",
+    caption: "Default metadata from the family scan. A group poses outdoors with Japanese flags near the water.",
+    altText: "Black and white photo of a group of servicemen posing with Japanese flags near the water.",
+    tags: ["family scan", "ww2", "group", "flags"],
+    url: "/assets/family-scans/flags-group.jpg",
+    source: "Family scan",
+    createdAt: "2026-06-05T00:00:00.000Z"
+  },
+  {
+    id: "family-scan-soldier-in-field",
+    galleryId: FAMILY_SCANS_GALLERY_ID,
+    title: "Soldier In Field",
+    caption: "Default metadata from the family scan. A helmeted serviceman stands in tall grass holding equipment.",
+    altText: "Black and white photo of a helmeted serviceman standing in a field with equipment.",
+    tags: ["family scan", "ww2", "field", "soldier"],
+    url: "/assets/family-scans/soldier-in-field.jpg",
+    source: "Family scan",
+    createdAt: "2026-06-05T00:00:00.000Z"
+  },
+  {
+    id: "family-scan-shoreline-vehicle",
+    galleryId: FAMILY_SCANS_GALLERY_ID,
+    title: "Shoreline Vehicle",
+    caption: "Default metadata from the family scan. Servicemen are gathered around a vehicle or landing craft near the shoreline.",
+    altText: "Black and white photo of servicemen around a vehicle or landing craft near a shoreline.",
+    tags: ["family scan", "ww2", "shoreline", "vehicle"],
+    url: "/assets/family-scans/shoreline-vehicle.jpg",
+    source: "Family scan",
+    createdAt: "2026-06-05T00:00:00.000Z"
   }
 ];
 
@@ -484,11 +571,23 @@ async function getManifest(env) {
     galleries: Array.isArray(storedManifest?.galleries) ? storedManifest.galleries : [],
     photos: Array.isArray(storedManifest?.photos) ? storedManifest.photos : [],
     posterPhotoId: typeof storedManifest?.posterPhotoId === "string" ? storedManifest.posterPhotoId : "",
-    seededSources: Boolean(storedManifest?.seededSources)
+    seededSources: Boolean(storedManifest?.seededSources),
+    seededFamilyScans: Boolean(storedManifest?.seededFamilyScans)
   };
+
+  let shouldSave = false;
 
   if (!manifest.seededSources) {
     seedSourcePhotos(manifest);
+    shouldSave = true;
+  }
+
+  if (!manifest.seededFamilyScans) {
+    seedFamilyScanPhotos(manifest);
+    shouldSave = true;
+  }
+
+  if (shouldSave) {
     await saveManifest(env, manifest);
   }
 
@@ -510,6 +609,19 @@ function seedSourcePhotos(manifest) {
     .map((photo) => ({ ...photo, tags: [...photo.tags] }));
   manifest.photos.push(...missingPhotos);
   manifest.seededSources = true;
+}
+
+function seedFamilyScanPhotos(manifest) {
+  if (!manifest.galleries.some((gallery) => gallery.id === FAMILY_SCANS_GALLERY_ID)) {
+    manifest.galleries.unshift({ ...FAMILY_SCANS_GALLERY });
+  }
+
+  const existingPhotoIds = new Set(manifest.photos.map((photo) => photo.id));
+  const missingPhotos = FAMILY_SCAN_PHOTOS
+    .filter((photo) => !existingPhotoIds.has(photo.id))
+    .map((photo) => ({ ...photo, tags: [...photo.tags] }));
+  manifest.photos.unshift(...missingPhotos);
+  manifest.seededFamilyScans = true;
 }
 
 async function requireAdmin(request, env) {
