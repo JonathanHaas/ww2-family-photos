@@ -36,6 +36,12 @@ body {
   cursor: var(--grenade-cursor), auto;
 }
 
+body.lightbox-open {
+  position: fixed;
+  width: 100%;
+  overflow: hidden;
+}
+
 img {
   max-width: 100%;
 }
@@ -783,7 +789,8 @@ h2 {
   padding: 0;
   border: 0;
   border-radius: 8px;
-  overflow: hidden;
+  overflow: auto;
+  overscroll-behavior: contain;
   background: #111;
   box-shadow: var(--shadow);
   color: #fff7ea;
@@ -1229,6 +1236,22 @@ h2 {
 
   .photo-card-uploaded .photo-frame {
     min-height: 0;
+  }
+
+  .lightbox {
+    width: 100vw;
+    max-height: 100dvh;
+    margin: 0;
+    border-radius: 0;
+  }
+
+  .lightbox-image {
+    min-height: auto;
+  }
+
+  .lightbox-image img {
+    height: auto;
+    max-height: none;
   }
 }
 

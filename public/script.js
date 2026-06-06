@@ -6,6 +6,29 @@ const closeButton = document.querySelector(".close-button");
 const lightboxTitle = document.querySelector("#lightboxTitle");
 const lightboxCaption = document.querySelector("#lightboxCaption");
 const lightboxImage = document.querySelector(".lightbox-image");
+let pageScrollY = 0;
+
+function openLightbox() {
+  pageScrollY = window.scrollY;
+  document.body.style.top = `-${pageScrollY}px`;
+  document.body.classList.add("lightbox-open");
+  lightbox.showModal();
+  lightbox.scrollTop = 0;
+}
+
+function closeLightbox() {
+  lightbox.close();
+}
+
+function unlockPageScroll() {
+  if (!document.body.classList.contains("lightbox-open")) {
+    return;
+  }
+
+  document.body.classList.remove("lightbox-open");
+  document.body.style.top = "";
+  window.scrollTo(0, pageScrollY);
+}
 
 function wireCards() {
   const cards = document.querySelectorAll(".photo-card");
@@ -51,7 +74,7 @@ function wireCards() {
       }
 
       if (typeof lightbox.showModal === "function") {
-        lightbox.showModal();
+        openLightbox();
       }
     });
   });
@@ -224,17 +247,19 @@ wireCards();
 void loadArchive();
 
 closeButton.addEventListener("click", () => {
-  lightbox.close();
+  closeLightbox();
 });
 
 lightbox.addEventListener("click", (event) => {
   if (event.target === lightbox) {
-    lightbox.close();
+    closeLightbox();
   }
 });
 
+lightbox.addEventListener("close", unlockPageScroll);
+
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && lightbox.open) {
-    lightbox.close();
+    closeLightbox();
   }
 });
