@@ -102,18 +102,9 @@ function uniquePhotos(photos) {
   });
 }
 
-function renderGalleryTabs(galleries, activeGalleryId, activeTag, availableTags) {
-  if (!galleries.length) {
-    tabs.hidden = true;
-  } else {
-    tabs.hidden = false;
-    renderButtonList(
-      tabs,
-      [{ id: "all", label: "All" }, ...galleries.map((item) => ({ id: item.id, label: item.title }))],
-      activeGalleryId,
-      (id) => renderArchive(id, activeTag)
-    );
-  }
+function renderGalleryTabs(activeTag, availableTags) {
+  tabs.hidden = true;
+  tabs.replaceChildren();
 
   if (!availableTags.length) {
     tagTabs.hidden = true;
@@ -123,7 +114,7 @@ function renderGalleryTabs(galleries, activeGalleryId, activeTag, availableTags)
       tagTabs,
       [{ id: "all", label: "All tags" }, ...availableTags.map((tag) => ({ id: tag, label: tag }))],
       activeTag,
-      (tag) => renderArchive(activeGalleryId, tag)
+      (tag) => renderArchive(tag)
     );
   }
 }
@@ -144,23 +135,20 @@ function applyPosterImage(poster) {
   document.documentElement.style.setProperty("--collage-photo-one", posterUrl);
 }
 
-function renderArchive(activeGalleryId = "all", activeTag = "all") {
+function renderArchive(activeTag = "all") {
   if (!archiveState?.photos?.length) {
     wireCards();
     return;
   }
 
-  const galleries = archiveState.galleries || [];
-  const galleryLookup = new Map(galleries.map((item) => [item.id, item]));
-  const galleryPhotos = archiveState.photos.filter((photo) => activeGalleryId === "all" || photo.galleryId === activeGalleryId);
-  const availableTags = tagsForPhotos(galleryPhotos);
+  const availableTags = tagsForPhotos(archiveState.photos);
   const selectedTag = activeTag === "all" || availableTags.includes(activeTag) ? activeTag : "all";
-  const photos = uniquePhotos(galleryPhotos.filter((photo) => {
+  const photos = uniquePhotos(archiveState.photos.filter((photo) => {
     const tagMatches = selectedTag === "all" || (photo.tags || []).includes(selectedTag);
     return tagMatches;
   }));
 
-  renderGalleryTabs(galleries, activeGalleryId, selectedTag, availableTags);
+  renderGalleryTabs(selectedTag, availableTags);
   gallery.replaceChildren();
 
   if (!photos.length) {
@@ -177,14 +165,14 @@ function renderArchive(activeGalleryId = "all", activeTag = "all") {
     const meta = document.createElement("span");
     const title = document.createElement("strong");
     const detail = document.createElement("small");
-    const galleryTitle = galleryLookup.get(photo.galleryId)?.title || "Family Archive";
+    const detailText = photo.source || "Family Archive";
 
     card.className = "photo-card photo-card-uploaded";
     card.type = "button";
     card.dataset.title = photo.title || "Family Photo";
-    card.dataset.caption = photo.caption || galleryTitle;
+    card.dataset.caption = photo.caption || detailText;
     card.dataset.image = photo.url;
-    card.dataset.alt = photo.altText || photo.title || galleryTitle;
+    card.dataset.alt = photo.altText || photo.title || detailText;
     card.dataset.tags = (photo.tags || []).join(",");
     card.setAttribute("aria-label", `Open photo: ${card.dataset.alt}`);
 
@@ -195,7 +183,7 @@ function renderArchive(activeGalleryId = "all", activeTag = "all") {
 
     meta.className = "photo-meta";
     title.textContent = photo.title || "Family Photo";
-    detail.textContent = galleryTitle;
+    detail.textContent = detailText;
     meta.append(title, detail);
 
     if (photo.tags?.length) {
@@ -225,7 +213,7 @@ async function loadArchive() {
 
     archiveState = await response.json();
     applyPosterImage(archiveState.poster);
-    renderArchive("all");
+    renderArchive();
   } catch (error) {
     console.warn("Using placeholder gallery", error);
     wireCards();

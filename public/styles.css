@@ -925,19 +925,17 @@ h2 {
   align-items: start;
 }
 
+.admin-image-workspace {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 920px;
+}
+
 .admin-panel {
   padding: 22px;
   border: 1px solid rgba(24, 24, 24, 0.12);
   border-radius: 8px;
   background: rgba(255, 251, 242, 0.86);
   box-shadow: 0 12px 34px rgba(24, 24, 24, 0.08);
-}
-
-.album-panel {
-  border-color: rgba(74, 86, 55, 0.24);
-  background:
-    linear-gradient(180deg, rgba(74, 86, 55, 0.08), rgba(255, 251, 242, 0.92) 34%),
-    rgba(255, 251, 242, 0.9);
 }
 
 .image-panel {
@@ -961,6 +959,57 @@ h2 {
 
 .admin-section-heading .kicker {
   margin-bottom: 4px;
+}
+
+.admin-filterbar {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(160px, 0.5fr);
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 14px;
+  border: 1px solid rgba(31, 51, 73, 0.14);
+  border-radius: 7px;
+  background: rgba(247, 241, 230, 0.7);
+}
+
+.admin-chip-row,
+.admin-tag-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.admin-chip-row {
+  grid-column: 1 / -1;
+}
+
+.admin-chip-row button,
+.tag-suggestion {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid rgba(74, 86, 55, 0.26);
+  border-radius: 999px;
+  color: var(--olive);
+  background: rgba(255, 250, 240, 0.7);
+  cursor: var(--grenade-cursor), pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.admin-chip-row button.active,
+.admin-chip-row button:hover,
+.admin-chip-row button:focus-visible,
+.tag-suggestion:hover,
+.tag-suggestion:focus-visible {
+  color: #fff7ea;
+  background: var(--olive);
+}
+
+.admin-tag-picker {
+  margin-top: -6px;
 }
 
 .admin-form {
@@ -1023,11 +1072,6 @@ h2 {
   background: transparent;
 }
 
-.album-button {
-  border-color: var(--olive);
-  background: var(--olive);
-}
-
 .image-button {
   border-color: var(--navy);
   background: var(--navy);
@@ -1070,11 +1114,6 @@ h2 {
   border: 1px solid rgba(24, 24, 24, 0.12);
   border-radius: 6px;
   background: rgba(247, 241, 230, 0.82);
-}
-
-.album-list article {
-  border-left: 5px solid var(--olive);
-  background: rgba(247, 241, 230, 0.72);
 }
 
 .image-list article {

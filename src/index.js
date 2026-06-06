@@ -3,6 +3,13 @@ const SESSION_COOKIE = "archive_session";
 const SESSION_TTL_SECONDS = 60 * 60 * 8;
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+const DEFAULT_GALLERY_ID = "family-archive";
+const DEFAULT_GALLERY = {
+  id: DEFAULT_GALLERY_ID,
+  title: "Family Archive",
+  description: "Shared family photos organized by tags.",
+  createdAt: "2026-06-06T00:00:00.000Z"
+};
 const SOURCE_GALLERY_ID = "national-archives";
 const SOURCE_GALLERY = {
   id: SOURCE_GALLERY_ID,
@@ -358,7 +365,7 @@ async function handleDeleteGallery(env, galleryId) {
 
 async function handleUploadPhoto(request, env) {
   const form = await request.formData();
-  const galleryId = cleanText(form.get("galleryId"), 90);
+  const galleryId = cleanText(form.get("galleryId"), 90) || DEFAULT_GALLERY_ID;
   const title = cleanText(form.get("title"), 100) || "Untitled Photo";
   const caption = cleanText(form.get("caption"), 280);
   const altText = cleanText(form.get("altText"), 220);
@@ -420,7 +427,7 @@ async function handleUploadPhoto(request, env) {
 
 async function handleUpdatePhoto(request, env, photoId) {
   const body = await request.json().catch(() => null);
-  const galleryId = cleanText(body?.galleryId, 90);
+  const requestedGalleryId = cleanText(body?.galleryId, 90);
   const title = cleanText(body?.title, 100) || "Untitled Photo";
   const caption = cleanText(body?.caption, 280);
   const altText = cleanText(body?.altText, 220);
@@ -430,12 +437,9 @@ async function handleUpdatePhoto(request, env, photoId) {
     throw new HttpError(400, "Photo id is required.");
   }
 
-  if (!galleryId) {
-    throw new HttpError(400, "Choose a gallery.");
-  }
-
   const manifest = await getManifest(env);
   const photo = manifest.photos.find((item) => item.id === photoId);
+  const galleryId = requestedGalleryId || photo?.galleryId || DEFAULT_GALLERY_ID;
   const gallery = manifest.galleries.find((item) => item.id === galleryId);
 
   if (!photo) {
@@ -587,6 +591,10 @@ async function getManifest(env) {
     shouldSave = true;
   }
 
+  if (ensureDefaultGallery(manifest)) {
+    shouldSave = true;
+  }
+
   if (shouldSave) {
     await saveManifest(env, manifest);
   }
@@ -599,6 +607,8 @@ async function saveManifest(env, manifest) {
 }
 
 function seedSourcePhotos(manifest) {
+  ensureDefaultGallery(manifest);
+
   if (!manifest.galleries.some((gallery) => gallery.id === SOURCE_GALLERY_ID)) {
     manifest.galleries.push({ ...SOURCE_GALLERY });
   }
@@ -612,6 +622,8 @@ function seedSourcePhotos(manifest) {
 }
 
 function seedFamilyScanPhotos(manifest) {
+  ensureDefaultGallery(manifest);
+
   if (!manifest.galleries.some((gallery) => gallery.id === FAMILY_SCANS_GALLERY_ID)) {
     manifest.galleries.unshift({ ...FAMILY_SCANS_GALLERY });
   }
@@ -622,6 +634,15 @@ function seedFamilyScanPhotos(manifest) {
     .map((photo) => ({ ...photo, tags: [...photo.tags] }));
   manifest.photos.unshift(...missingPhotos);
   manifest.seededFamilyScans = true;
+}
+
+function ensureDefaultGallery(manifest) {
+  if (!manifest.galleries.some((gallery) => gallery.id === DEFAULT_GALLERY_ID)) {
+    manifest.galleries.unshift({ ...DEFAULT_GALLERY });
+    return true;
+  }
+
+  return false;
 }
 
 async function requireAdmin(request, env) {
@@ -855,50 +876,18 @@ function renderAdminApp() {
       </div>
       <nav aria-label="Admin actions">
         <a class="admin-tool-button" href="/">View Site</a>
-        <a class="admin-tool-button" href="#createGallery">New Album</a>
         <a class="admin-tool-button" href="#uploadImage">Upload Image</a>
-        <a class="admin-tool-button" href="#manageGalleries">Albums</a>
         <a class="admin-tool-button" href="#manageImages">Images</a>
         <button class="admin-tool-button" id="refreshButton" type="button">Refresh</button>
         <button class="admin-tool-button danger" id="toolbarLogoutButton" type="button">Sign Out</button>
       </nav>
     </header>
-    <main class="admin-shell admin-workspace">
-      <section class="admin-panel album-panel">
-        <p class="kicker">Albums</p>
-        <h1>Organize</h1>
-        <form class="admin-form" id="galleryForm">
-          <div class="admin-section-anchor" id="createGallery"></div>
-          <label class="admin-field">
-            <span>New album</span>
-            <input name="title" maxlength="80" required />
-          </label>
-          <label class="admin-field">
-            <span>Description</span>
-            <textarea name="description" maxlength="220"></textarea>
-          </label>
-          <button class="admin-button album-button" type="submit">Create Album</button>
-        </form>
-
-        <section class="admin-manager">
-          <div class="admin-section-anchor" id="manageGalleries"></div>
-          <div class="admin-section-heading">
-            <p class="kicker">Manage</p>
-            <h2>Albums</h2>
-          </div>
-          <div class="admin-list album-list" id="galleryManager"></div>
-        </section>
-      </section>
-
+    <main class="admin-shell admin-image-workspace">
       <section class="admin-panel image-panel">
         <p class="kicker">Images</p>
         <h1>Upload</h1>
         <form class="admin-form" id="photoForm">
           <div class="admin-section-anchor" id="uploadImage"></div>
-          <label class="admin-field">
-            <span>Album</span>
-            <select name="galleryId" id="gallerySelect" required></select>
-          </label>
           <label class="admin-field">
             <span>Photo title</span>
             <input name="title" maxlength="100" required />
@@ -913,8 +902,9 @@ function renderAdminApp() {
           </label>
           <label class="admin-field">
             <span>Tags</span>
-            <input name="tags" maxlength="180" placeholder="fred, uniform, letters" />
+            <input name="tags" id="uploadTags" maxlength="180" placeholder="fred, uniform, letters" />
           </label>
+          <div class="admin-tag-picker" id="uploadTagPicker" aria-label="Existing tags"></div>
           <label class="admin-field">
             <span>Photo</span>
             <input name="photo" type="file" accept="image/jpeg,image/png,image/webp,image/gif" required />
@@ -933,21 +923,39 @@ function renderAdminApp() {
             <p class="kicker">Manage</p>
             <h2>Images</h2>
           </div>
+          <div class="admin-filterbar" aria-label="Image filters">
+            <label class="admin-field">
+              <span>Search</span>
+              <input id="imageSearch" type="search" placeholder="Search title, caption, tags" />
+            </label>
+            <label class="admin-field">
+              <span>Show</span>
+              <select id="imageQualityFilter">
+                <option value="all">All images</option>
+                <option value="untagged">Needs tags</option>
+                <option value="missing-alt">Needs alt text</option>
+              </select>
+            </label>
+            <div class="admin-chip-row" id="imageTagFilter" aria-label="Filter by tag"></div>
+          </div>
           <div class="admin-list image-list" id="photoManager"></div>
         </div>
       </section>
     </main>
     <script>
-      const galleryForm = document.querySelector("#galleryForm");
       const photoForm = document.querySelector("#photoForm");
-      const gallerySelect = document.querySelector("#gallerySelect");
-      const galleryManager = document.querySelector("#galleryManager");
+      const uploadTags = document.querySelector("#uploadTags");
+      const uploadTagPicker = document.querySelector("#uploadTagPicker");
+      const imageSearch = document.querySelector("#imageSearch");
+      const imageQualityFilter = document.querySelector("#imageQualityFilter");
+      const imageTagFilter = document.querySelector("#imageTagFilter");
       const photoManager = document.querySelector("#photoManager");
       const status = document.querySelector("#status");
       const logoutButton = document.querySelector("#logoutButton");
       const toolbarLogoutButton = document.querySelector("#toolbarLogoutButton");
       const refreshButton = document.querySelector("#refreshButton");
       let archive = { galleries: [], photos: [], poster: null };
+      let selectedImageTag = "all";
 
       async function requestJson(url, options) {
         const response = await fetch(url, options);
@@ -964,13 +972,6 @@ function renderAdminApp() {
         status.textContent = message;
       }
 
-      function galleryOptions(selectedId) {
-        return archive.galleries.map((gallery) => {
-          const selected = gallery.id === selectedId ? " selected" : "";
-          return "<option value=\\"" + gallery.id + "\\"" + selected + ">" + escapeHtml(gallery.title) + "</option>";
-        }).join("");
-      }
-
       function escapeHtml(value) {
         return String(value || "").replace(/[&<>"']/g, (character) => ({
           "&": "&amp;",
@@ -981,55 +982,119 @@ function renderAdminApp() {
         })[character]);
       }
 
-      function renderArchive() {
-        gallerySelect.replaceChildren();
-        galleryManager.replaceChildren();
-        photoManager.replaceChildren();
+      function tagList(value) {
+        return [...new Set(String(value || "")
+          .split(",")
+          .map((tag) => tag.trim().toLowerCase())
+          .filter(Boolean))]
+          .slice(0, 12);
+      }
 
-        if (!archive.galleries.length) {
-          const option = document.createElement("option");
-          option.textContent = "Create an album first";
-          option.value = "";
-          gallerySelect.append(option);
-          galleryManager.textContent = "No albums yet.";
-          photoManager.textContent = "No images yet.";
+      function allTags() {
+        return [...new Set(archive.photos.flatMap((photo) => photo.tags || []))].sort();
+      }
+
+      function setInputTags(input, tags) {
+        input.value = [...new Set(tags.map((tag) => tag.trim().toLowerCase()).filter(Boolean))].join(", ");
+      }
+
+      function renderTagPicker(container, input) {
+        const currentTags = tagList(input.value);
+        const tags = allTags().filter((tag) => !currentTags.includes(tag));
+        container.replaceChildren();
+
+        if (!tags.length) {
           return;
         }
 
-        archive.galleries.forEach((gallery) => {
-          const option = document.createElement("option");
-          option.value = gallery.id;
-          option.textContent = gallery.title;
-          gallerySelect.append(option);
-
-          const galleryPhotos = archive.photos.filter((photo) => photo.galleryId === gallery.id);
-          const count = galleryPhotos.length;
-          const tags = [...new Set(galleryPhotos.flatMap((photo) => photo.tags || []))];
-          const item = document.createElement("article");
-          item.innerHTML = "<form class=\\"manage-form gallery-manage-form\\" data-gallery-id=\\"" + gallery.id + "\\">" +
-            "<label class=\\"admin-field\\"><span>Title</span><input name=\\"title\\" maxlength=\\"80\\" required /></label>" +
-            "<label class=\\"admin-field\\"><span>Description</span><textarea name=\\"description\\" maxlength=\\"220\\"></textarea></label>" +
-            "<small></small><div class=\\"tag-list\\"></div>" +
-            "<div class=\\"admin-actions\\"><button class=\\"admin-button album-button\\" type=\\"submit\\">Save Album</button>" +
-            "<button class=\\"admin-button secondary danger\\" data-delete-gallery=\\"" + gallery.id + "\\" type=\\"button\\">Delete Album</button></div>" +
-            "</form>";
-          item.querySelector("[name=title]").value = gallery.title;
-          item.querySelector("[name=description]").value = gallery.description || "";
-          item.querySelector("small").textContent = count + (count === 1 ? " photo" : " photos");
-          item.querySelector(".tag-list").replaceChildren(...tags.map((tag) => {
-            const span = document.createElement("span");
-            span.textContent = tag;
-            return span;
-          }));
-          galleryManager.append(item);
+        tags.forEach((tag) => {
+          const button = document.createElement("button");
+          button.className = "tag-suggestion";
+          button.type = "button";
+          button.textContent = tag;
+          button.addEventListener("click", () => {
+            setInputTags(input, [...tagList(input.value), tag]);
+            renderTagPicker(container, input);
+          });
+          container.append(button);
         });
+      }
+
+      function renderImageFilters() {
+        const tags = allTags();
+        imageTagFilter.replaceChildren();
+
+        const allButton = document.createElement("button");
+        allButton.type = "button";
+        allButton.className = selectedImageTag === "all" ? "active" : "";
+        allButton.textContent = "All tags";
+        allButton.addEventListener("click", () => {
+          selectedImageTag = "all";
+          renderArchive();
+        });
+        imageTagFilter.append(allButton);
+
+        tags.forEach((tag) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = selectedImageTag === tag ? "active" : "";
+          button.textContent = tag;
+          button.addEventListener("click", () => {
+            selectedImageTag = tag;
+            renderArchive();
+          });
+          imageTagFilter.append(button);
+        });
+      }
+
+      function filteredPhotos() {
+        const query = imageSearch.value.trim().toLowerCase();
+        const quality = imageQualityFilter.value;
+
+        return archive.photos.filter((photo) => {
+          const tags = photo.tags || [];
+          const searchable = [
+            photo.title,
+            photo.caption,
+            photo.altText,
+            photo.source,
+            tags.join(" ")
+          ].join(" ").toLowerCase();
+
+          if (selectedImageTag !== "all" && !tags.includes(selectedImageTag)) {
+            return false;
+          }
+
+          if (quality === "untagged" && tags.length) {
+            return false;
+          }
+
+          if (quality === "missing-alt" && String(photo.altText || "").trim()) {
+            return false;
+          }
+
+          return !query || searchable.includes(query);
+        });
+      }
+
+      function renderArchive() {
+        photoManager.replaceChildren();
+        renderTagPicker(uploadTagPicker, uploadTags);
+        renderImageFilters();
 
         if (!archive.photos.length) {
           photoManager.textContent = "No images yet.";
           return;
         }
 
-        archive.photos.forEach((photo) => {
+        const photos = filteredPhotos();
+
+        if (!photos.length) {
+          photoManager.textContent = "No images match those filters.";
+          return;
+        }
+
+        photos.forEach((photo) => {
           const item = document.createElement("article");
           item.className = "photo-manage-item";
           const isPoster = archive.poster?.id === photo.id;
@@ -1038,11 +1103,11 @@ function renderAdminApp() {
           const posterButtonText = isPoster ? "Hero Poster" : "Set as Hero";
           item.innerHTML = "<div><img class=\\"admin-thumb\\" src=\\"" + photo.url + "\\" alt=\\"\\" loading=\\"lazy\\" />" + posterLabel + sourceLabel + "</div>" +
             "<form class=\\"manage-form photo-manage-form\\" data-photo-id=\\"" + photo.id + "\\">" +
-            "<label class=\\"admin-field\\"><span>Album</span><select name=\\"galleryId\\" required>" + galleryOptions(photo.galleryId) + "</select></label>" +
             "<label class=\\"admin-field\\"><span>Title</span><input name=\\"title\\" maxlength=\\"100\\" required /></label>" +
             "<label class=\\"admin-field\\"><span>Caption</span><textarea name=\\"caption\\" maxlength=\\"280\\"></textarea></label>" +
             "<label class=\\"admin-field\\"><span>Alt text</span><textarea name=\\"altText\\" maxlength=\\"220\\"></textarea></label>" +
             "<label class=\\"admin-field\\"><span>Tags</span><input name=\\"tags\\" maxlength=\\"180\\" /></label>" +
+            "<div class=\\"admin-tag-picker\\" data-tag-picker aria-label=\\"Existing tags\\"></div>" +
             "<div class=\\"admin-actions\\"><button class=\\"admin-button\\" type=\\"submit\\">Save Image</button>" +
             "<button class=\\"admin-button secondary poster\\" data-set-poster=\\"" + photo.id + "\\" type=\\"button\\">" + posterButtonText + "</button>" +
             "<button class=\\"admin-button secondary danger\\" data-delete-photo=\\"" + photo.id + "\\" type=\\"button\\">Delete Image</button></div>" +
@@ -1052,6 +1117,7 @@ function renderAdminApp() {
           item.querySelector("[name=caption]").value = photo.caption || "";
           item.querySelector("[name=altText]").value = photo.altText || "";
           item.querySelector("[name=tags]").value = (photo.tags || []).join(", ");
+          renderTagPicker(item.querySelector("[data-tag-picker]"), item.querySelector("[name=tags]"));
           photoManager.append(item);
         });
       }
@@ -1060,23 +1126,6 @@ function renderAdminApp() {
         archive = await requestJson("/api/admin");
         renderArchive();
       }
-
-      galleryForm.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        setStatus("Creating album...");
-        const form = new FormData(galleryForm);
-        await requestJson("/api/galleries", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-            title: form.get("title"),
-            description: form.get("description")
-          })
-        });
-        galleryForm.reset();
-        setStatus("Album created.");
-        await loadArchive();
-      });
 
       photoForm.addEventListener("submit", async (event) => {
         event.preventDefault();
@@ -1087,48 +1136,6 @@ function renderAdminApp() {
         });
         photoForm.reset();
         setStatus("Photo uploaded.");
-        await loadArchive();
-      });
-
-      galleryManager.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        const form = event.target.closest(".gallery-manage-form");
-
-        if (!form) {
-          return;
-        }
-
-        const data = new FormData(form);
-        setStatus("Saving album...");
-        await requestJson("/api/galleries/" + encodeURIComponent(form.dataset.galleryId), {
-          method: "PUT",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-            title: data.get("title"),
-            description: data.get("description")
-          })
-        });
-        setStatus("Album saved.");
-        await loadArchive();
-      });
-
-      galleryManager.addEventListener("click", async (event) => {
-        const button = event.target.closest("[data-delete-gallery]");
-
-        if (!button) {
-          return;
-        }
-
-        const gallery = archive.galleries.find((item) => item.id === button.dataset.deleteGallery);
-        const count = archive.photos.filter((photo) => photo.galleryId === button.dataset.deleteGallery).length;
-
-        if (!confirm("Delete " + (gallery?.title || "this album") + " and " + count + " image" + (count === 1 ? "" : "s") + "?")) {
-          return;
-        }
-
-        setStatus("Deleting album...");
-        await requestJson("/api/galleries/" + encodeURIComponent(button.dataset.deleteGallery), { method: "DELETE" });
-        setStatus("Album deleted.");
         await loadArchive();
       });
 
@@ -1146,7 +1153,6 @@ function renderAdminApp() {
           method: "PUT",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
-            galleryId: data.get("galleryId"),
             title: data.get("title"),
             caption: data.get("caption"),
             altText: data.get("altText"),
@@ -1155,6 +1161,20 @@ function renderAdminApp() {
         });
         setStatus("Image saved.");
         await loadArchive();
+      });
+
+      photoManager.addEventListener("input", (event) => {
+        const input = event.target.closest("[name=tags]");
+
+        if (!input) {
+          return;
+        }
+
+        const picker = input.closest("form")?.querySelector("[data-tag-picker]");
+
+        if (picker) {
+          renderTagPicker(picker, input);
+        }
       });
 
       photoManager.addEventListener("click", async (event) => {
@@ -1216,6 +1236,13 @@ function renderAdminApp() {
         await loadArchive();
         setStatus("Archive refreshed.");
       });
+
+      uploadTags.addEventListener("input", () => {
+        renderTagPicker(uploadTagPicker, uploadTags);
+      });
+
+      imageSearch.addEventListener("input", renderArchive);
+      imageQualityFilter.addEventListener("change", renderArchive);
 
       loadArchive().catch((error) => {
         status.textContent = error.message;
