@@ -420,6 +420,7 @@ async function handleUploadPhoto(request, env) {
   };
 
   manifest.photos.unshift(photo);
+  manifest.posterPhotoId = photo.id;
   await saveManifest(env, manifest);
 
   return jsonResponse({ photo: publicPhoto(photo) }, { status: 201 });
@@ -533,9 +534,24 @@ async function getPublicArchive(env) {
   const posterPhoto = manifest.photos.find((photo) => photo.id === manifest.posterPhotoId);
   return {
     galleries: manifest.galleries,
-    photos: manifest.photos.map(publicPhoto),
+    photos: sortPhotosByDateDescending(manifest.photos).map(publicPhoto),
     poster: posterPhoto ? publicPhoto(posterPhoto) : null
   };
+}
+
+function sortPhotosByDateDescending(photos) {
+  return [...photos].sort((left, right) => {
+    const leftTime = Date.parse(left.createdAt || left.updatedAt || "");
+    const rightTime = Date.parse(right.createdAt || right.updatedAt || "");
+    const leftSafeTime = Number.isNaN(leftTime) ? 0 : leftTime;
+    const rightSafeTime = Number.isNaN(rightTime) ? 0 : rightTime;
+
+    if (leftSafeTime !== rightSafeTime) {
+      return rightSafeTime - leftSafeTime;
+    }
+
+    return String(right.id || "").localeCompare(String(left.id || ""));
+  });
 }
 
 function publicPhoto(photo) {
@@ -1135,7 +1151,7 @@ function renderAdminApp() {
           body: new FormData(photoForm)
         });
         photoForm.reset();
-        setStatus("Photo uploaded.");
+        setStatus("Photo uploaded and set as hero.");
         await loadArchive();
       });
 
