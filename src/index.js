@@ -855,35 +855,48 @@ function renderAdminApp() {
       </div>
       <nav aria-label="Admin actions">
         <a class="admin-tool-button" href="/">View Site</a>
-        <a class="admin-tool-button" href="#createGallery">New Gallery</a>
+        <a class="admin-tool-button" href="#createGallery">New Album</a>
         <a class="admin-tool-button" href="#uploadImage">Upload Image</a>
-        <a class="admin-tool-button" href="#manageGalleries">Galleries</a>
+        <a class="admin-tool-button" href="#manageGalleries">Albums</a>
         <a class="admin-tool-button" href="#manageImages">Images</a>
         <button class="admin-tool-button" id="refreshButton" type="button">Refresh</button>
         <button class="admin-tool-button danger" id="toolbarLogoutButton" type="button">Sign Out</button>
       </nav>
     </header>
-    <main class="admin-shell">
-      <section class="admin-panel">
-        <p class="kicker">Upload</p>
-        <h1>Photo Archive</h1>
+    <main class="admin-shell admin-workspace">
+      <section class="admin-panel album-panel">
+        <p class="kicker">Albums</p>
+        <h1>Organize</h1>
         <form class="admin-form" id="galleryForm">
           <div class="admin-section-anchor" id="createGallery"></div>
           <label class="admin-field">
-            <span>New gallery</span>
+            <span>New album</span>
             <input name="title" maxlength="80" required />
           </label>
           <label class="admin-field">
             <span>Description</span>
             <textarea name="description" maxlength="220"></textarea>
           </label>
-          <button class="admin-button" type="submit">Create Gallery</button>
+          <button class="admin-button album-button" type="submit">Create Album</button>
         </form>
-        <hr />
+
+        <section class="admin-manager">
+          <div class="admin-section-anchor" id="manageGalleries"></div>
+          <div class="admin-section-heading">
+            <p class="kicker">Manage</p>
+            <h2>Albums</h2>
+          </div>
+          <div class="admin-list album-list" id="galleryManager"></div>
+        </section>
+      </section>
+
+      <section class="admin-panel image-panel">
+        <p class="kicker">Images</p>
+        <h1>Upload</h1>
         <form class="admin-form" id="photoForm">
           <div class="admin-section-anchor" id="uploadImage"></div>
           <label class="admin-field">
-            <span>Gallery</span>
+            <span>Album</span>
             <select name="galleryId" id="gallerySelect" required></select>
           </label>
           <label class="admin-field">
@@ -907,27 +920,20 @@ function renderAdminApp() {
             <input name="photo" type="file" accept="image/jpeg,image/png,image/webp,image/gif" required />
           </label>
           <div class="admin-actions">
-            <button class="admin-button" type="submit">Upload Photo</button>
+            <button class="admin-button image-button" type="submit">Upload Image</button>
             <a class="admin-button secondary" href="/">View Site</a>
             <button class="admin-button secondary" id="logoutButton" type="button">Sign Out</button>
           </div>
           <p class="admin-status" id="status"></p>
         </form>
-      </section>
-      <section class="admin-panel">
-        <p class="kicker">Manage</p>
-        <h2>Archive</h2>
+
         <div class="admin-manager">
-          <section>
-            <div class="admin-section-anchor" id="manageGalleries"></div>
-            <h3>Galleries</h3>
-            <div class="admin-list" id="galleryManager"></div>
-          </section>
-          <section>
-            <div class="admin-section-anchor" id="manageImages"></div>
-            <h3>Images</h3>
-            <div class="admin-list" id="photoManager"></div>
-          </section>
+          <div class="admin-section-anchor" id="manageImages"></div>
+          <div class="admin-section-heading">
+            <p class="kicker">Manage</p>
+            <h2>Images</h2>
+          </div>
+          <div class="admin-list image-list" id="photoManager"></div>
         </div>
       </section>
     </main>
@@ -982,10 +988,10 @@ function renderAdminApp() {
 
         if (!archive.galleries.length) {
           const option = document.createElement("option");
-          option.textContent = "Create a gallery first";
+          option.textContent = "Create an album first";
           option.value = "";
           gallerySelect.append(option);
-          galleryManager.textContent = "No galleries yet.";
+          galleryManager.textContent = "No albums yet.";
           photoManager.textContent = "No images yet.";
           return;
         }
@@ -1004,8 +1010,8 @@ function renderAdminApp() {
             "<label class=\\"admin-field\\"><span>Title</span><input name=\\"title\\" maxlength=\\"80\\" required /></label>" +
             "<label class=\\"admin-field\\"><span>Description</span><textarea name=\\"description\\" maxlength=\\"220\\"></textarea></label>" +
             "<small></small><div class=\\"tag-list\\"></div>" +
-            "<div class=\\"admin-actions\\"><button class=\\"admin-button\\" type=\\"submit\\">Save Gallery</button>" +
-            "<button class=\\"admin-button secondary danger\\" data-delete-gallery=\\"" + gallery.id + "\\" type=\\"button\\">Delete Gallery</button></div>" +
+            "<div class=\\"admin-actions\\"><button class=\\"admin-button album-button\\" type=\\"submit\\">Save Album</button>" +
+            "<button class=\\"admin-button secondary danger\\" data-delete-gallery=\\"" + gallery.id + "\\" type=\\"button\\">Delete Album</button></div>" +
             "</form>";
           item.querySelector("[name=title]").value = gallery.title;
           item.querySelector("[name=description]").value = gallery.description || "";
@@ -1032,7 +1038,7 @@ function renderAdminApp() {
           const posterButtonText = isPoster ? "Hero Poster" : "Set as Hero";
           item.innerHTML = "<div><img class=\\"admin-thumb\\" src=\\"" + photo.url + "\\" alt=\\"\\" loading=\\"lazy\\" />" + posterLabel + sourceLabel + "</div>" +
             "<form class=\\"manage-form photo-manage-form\\" data-photo-id=\\"" + photo.id + "\\">" +
-            "<label class=\\"admin-field\\"><span>Gallery</span><select name=\\"galleryId\\" required>" + galleryOptions(photo.galleryId) + "</select></label>" +
+            "<label class=\\"admin-field\\"><span>Album</span><select name=\\"galleryId\\" required>" + galleryOptions(photo.galleryId) + "</select></label>" +
             "<label class=\\"admin-field\\"><span>Title</span><input name=\\"title\\" maxlength=\\"100\\" required /></label>" +
             "<label class=\\"admin-field\\"><span>Caption</span><textarea name=\\"caption\\" maxlength=\\"280\\"></textarea></label>" +
             "<label class=\\"admin-field\\"><span>Alt text</span><textarea name=\\"altText\\" maxlength=\\"220\\"></textarea></label>" +
@@ -1057,7 +1063,7 @@ function renderAdminApp() {
 
       galleryForm.addEventListener("submit", async (event) => {
         event.preventDefault();
-        setStatus("Creating gallery...");
+        setStatus("Creating album...");
         const form = new FormData(galleryForm);
         await requestJson("/api/galleries", {
           method: "POST",
@@ -1068,7 +1074,7 @@ function renderAdminApp() {
           })
         });
         galleryForm.reset();
-        setStatus("Gallery created.");
+        setStatus("Album created.");
         await loadArchive();
       });
 
@@ -1093,7 +1099,7 @@ function renderAdminApp() {
         }
 
         const data = new FormData(form);
-        setStatus("Saving gallery...");
+        setStatus("Saving album...");
         await requestJson("/api/galleries/" + encodeURIComponent(form.dataset.galleryId), {
           method: "PUT",
           headers: { "content-type": "application/json" },
@@ -1102,7 +1108,7 @@ function renderAdminApp() {
             description: data.get("description")
           })
         });
-        setStatus("Gallery saved.");
+        setStatus("Album saved.");
         await loadArchive();
       });
 
@@ -1116,13 +1122,13 @@ function renderAdminApp() {
         const gallery = archive.galleries.find((item) => item.id === button.dataset.deleteGallery);
         const count = archive.photos.filter((photo) => photo.galleryId === button.dataset.deleteGallery).length;
 
-        if (!confirm("Delete " + (gallery?.title || "this gallery") + " and " + count + " image" + (count === 1 ? "" : "s") + "?")) {
+        if (!confirm("Delete " + (gallery?.title || "this album") + " and " + count + " image" + (count === 1 ? "" : "s") + "?")) {
           return;
         }
 
-        setStatus("Deleting gallery...");
+        setStatus("Deleting album...");
         await requestJson("/api/galleries/" + encodeURIComponent(button.dataset.deleteGallery), { method: "DELETE" });
-        setStatus("Gallery deleted.");
+        setStatus("Album deleted.");
         await loadArchive();
       });
 

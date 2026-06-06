@@ -920,6 +920,11 @@ h2 {
   margin: 0 auto;
 }
 
+.admin-workspace {
+  grid-template-columns: minmax(280px, 0.72fr) minmax(360px, 1.28fr);
+  align-items: start;
+}
+
 .admin-panel {
   padding: 22px;
   border: 1px solid rgba(24, 24, 24, 0.12);
@@ -928,10 +933,34 @@ h2 {
   box-shadow: 0 12px 34px rgba(24, 24, 24, 0.08);
 }
 
+.album-panel {
+  border-color: rgba(74, 86, 55, 0.24);
+  background:
+    linear-gradient(180deg, rgba(74, 86, 55, 0.08), rgba(255, 251, 242, 0.92) 34%),
+    rgba(255, 251, 242, 0.9);
+}
+
+.image-panel {
+  border-color: rgba(31, 51, 73, 0.22);
+  background:
+    linear-gradient(180deg, rgba(31, 51, 73, 0.08), rgba(255, 251, 242, 0.9) 34%),
+    rgba(255, 251, 242, 0.88);
+}
+
 .admin-panel h1,
 .admin-panel h2 {
   margin-bottom: 18px;
   font-size: clamp(2rem, 5vw, 3.5rem);
+}
+
+.admin-section-heading {
+  margin-top: 28px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(24, 24, 24, 0.12);
+}
+
+.admin-section-heading .kicker {
+  margin-bottom: 4px;
 }
 
 .admin-form {
@@ -994,6 +1023,16 @@ h2 {
   background: transparent;
 }
 
+.album-button {
+  border-color: var(--olive);
+  background: var(--olive);
+}
+
+.image-button {
+  border-color: var(--navy);
+  background: var(--navy);
+}
+
 .admin-button.poster {
   border-color: var(--brass);
   color: #5b3d12;
@@ -1018,7 +1057,7 @@ h2 {
 
 .admin-manager {
   display: grid;
-  gap: 28px;
+  gap: 12px;
 }
 
 .admin-manager h3 {
@@ -1031,6 +1070,17 @@ h2 {
   border: 1px solid rgba(24, 24, 24, 0.12);
   border-radius: 6px;
   background: rgba(247, 241, 230, 0.82);
+}
+
+.album-list article {
+  border-left: 5px solid var(--olive);
+  background: rgba(247, 241, 230, 0.72);
+}
+
+.image-list article {
+  border-left: 0;
+  background: #fffaf0;
+  box-shadow: 0 10px 24px rgba(24, 24, 24, 0.08);
 }
 
 .manage-form {
