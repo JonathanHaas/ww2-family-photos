@@ -17,6 +17,7 @@ function openLightbox() {
 }
 
 function closeLightbox() {
+  unlockPageScroll();
   lightbox.close();
 }
 
@@ -256,7 +257,10 @@ lightbox.addEventListener("click", (event) => {
   }
 });
 
-lightbox.addEventListener("close", unlockPageScroll);
+lightbox.addEventListener("close", () => {
+  // scroll already restored in closeLightbox; guard in case dialog is closed by other means
+  unlockPageScroll();
+});
 
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && lightbox.open) {
